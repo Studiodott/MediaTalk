@@ -1,8 +1,9 @@
 gunicorn
 flask
 flask-restful
+flask-socketio
 flask-cors
-Celery
+celery
 redis
 psycopg2
 gevent
