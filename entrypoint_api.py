@@ -13,7 +13,7 @@ def hello():
 	<head>
 	</head>
 	<body>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
 		<script type="text/javascript">
 let ws_proto = 'wss:';
 if (window.location.protocol == 'http:') {
