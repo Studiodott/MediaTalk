@@ -16,7 +16,7 @@ def hello():
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
 		<script type="text/javascript">
 var socket = io(location.origin.replace(/^http/, 'ws'), {
-	transports : [ 'websocket' ],
+	transports : [ 'websocket', 'polling' ],
 });
 socket.on('connect', function() {
 	socket.emit('debug', 'hello');
