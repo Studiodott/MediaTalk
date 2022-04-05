@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 from flask import Flask, g, render_template, send_from_directory
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit
+from flask_cors import CORS
 from pprint import pprint as D
 
 app = Flask(__name__)
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins='*', logger=True)
+cors = CORS(app, resources={ r"/*" : { 'origins' : [ 'http://localhost:3000' ] } })
 
 @app.route('/', methods=[ 'GET' ])
 def push_index():
@@ -40,6 +42,9 @@ socket.on('connect', function() {
 @socketio.on('debug')
 def handle_debug(data):
 	print(f"debug data={data}")
+	if data == 'new_tag':
+		emit('new_tag', 'ok', broadcast = True)
+
 
 if __name__ == '__main__':
 	socketio.run(app)
