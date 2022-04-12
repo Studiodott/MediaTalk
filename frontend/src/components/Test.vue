@@ -18,16 +18,13 @@ export default {
       tags : [],
     };
   },
-  sockets: {
-    new_tag : function(data) {
-      console.log('new_tag(data='+data+')');
-      this.tags.push(`server just said "${data}"`);
-    },
-  },
   methods : {
     clicked() {
       this.$socket.emit('debug', 'new_tag');
     }
-  }
+  },
+  mounted : function() {
+    console.log("mounted");
+  },
 };
 </script>

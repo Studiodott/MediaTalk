@@ -8,6 +8,8 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@oruga-ui/oruga-next": "^0.5.5",
+    "pinia": "^2.0.13",
     "vue": "^3.2.31",
     "vue-3-socket.io": "^1.0.5"
   },
