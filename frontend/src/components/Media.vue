@@ -1,14 +1,10 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
   <div>
-    <TagChooser/>
     <div style="padding-top: 30px; width: 50%;">
       <p>This is {{ media_type }} with handle {{ handle }}</p>
       <p><i>{{ description }}</i></p>
-    </div>
-    <div style="padding-top: 30px; width: 50%;">
-      <p>This is {{ media_type }} with handle {{ handle }}</p>
-      <p><i>{{ description }}</i></p>
+      <TagChooser/>
     </div>
   </div>
 </template>

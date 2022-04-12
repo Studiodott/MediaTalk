@@ -1,14 +1,15 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
-  <o-field label="Choose a tag:">
-    <o-inputitems
-      autocomplete
-      v-model="chosenTags"
-      :data="filteredTags"
-      field="name"
-      :allow-new="true"
-      @typing="filterTags">
-    </o-inputitems>
+  <o-field
+    label="select a tag">
+    <o-select
+      v-model="chosenTag">
+      <option
+        v-for="(tag, tag_index) in tag_store.tags"
+        :key="tag_index">
+        {{ tag.name }} <i>{{ tag.description }}</i>
+      </option>
+    </o-select>
   </o-field>
 </template>
 
@@ -19,8 +20,7 @@ export default {
   name : 'TagChooser',
   data : function() {
     return {
-      chosenTags : [],
-      filteredTags : [],
+      chosenTag : this.tag_store.tags[0],
     };
   },
   setup : function() {
@@ -28,15 +28,8 @@ export default {
     return { tag_store };
   },
   mounted : function() {
-    this.filteredTags = this.tag_store.tags;
   },
   methods : {
-    filterTags : function(search) {
-      this.filteredTags = this.tag_store.tags.filter(tag => {
-        return tag.name.toLowerCase()
-          .indexOf(search.toLowerCase()) >= 0;
-      });
-    },
   },
 };
 </script>

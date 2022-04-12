@@ -18,7 +18,6 @@ def list():
 			tag;
 		"""
 
-	D(key())
 	g.db_cur.execute(q)
 	return g.db_cur.fetchall()
 

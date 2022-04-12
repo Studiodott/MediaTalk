@@ -89,12 +89,12 @@ api.add_resource(TagResource, '/api/tag/<handle>')
 @app.route('/', methods=[ 'GET' ])
 def push_index():
 	D(f"staticindex")
-	return send_from_directory('../../frontend/dist', 'index.html')
+	return send_from_directory('../../../frontend/dist', 'index.html')
 
 @app.route('/<path:path>', methods=[ 'GET' ])
 def push_static(path=None):
 	D(f"static, path={path}")
-	return send_from_directory('../../frontend/dist', path)
+	return send_from_directory('../../../frontend/dist', path)
 
 @app.route('/foo', methods=[ 'GET' ])
 def hello():

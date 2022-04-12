@@ -1,9 +1,5 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
-  <div>
-    <p v-for="(t, t_index) in tag_store.tags" :key="t_index">{{t}}</p>
-    <Test />
-  </div>
   <div
     v-for="(m, m_index) in media_store.media" :key="m_index">
     <Media v-bind="m"/>
