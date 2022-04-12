@@ -8,6 +8,7 @@
 
 <script>
 import { tagStore } from '@/store/tag.js';
+import { taggingStore } from '@/store/tagging.js';
 import { mediaStore } from '@/store/media.js';
 import Test from "./components/Test.vue";
 import Media from "./components/Media.vue";
@@ -22,9 +23,12 @@ export default {
     tag_store.load();
     const media_store = mediaStore();
     media_store.load();
+    const tagging_store = taggingStore();
+    tagging_store.load();
     return {
       tag_store,
       media_store,
+      tagging_store,
     };
   },
   sockets: {
@@ -34,6 +38,9 @@ export default {
     },
     media_created : function(data) {
       this.media_store.add(data);
+    },
+    tagging_created : function(data) {
+      this.tagging_store.add(data);
     },
   },
   mounted : function() {

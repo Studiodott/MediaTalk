@@ -89,6 +89,7 @@ create table "tagging"
 	media_id int,
 	tag_id int,
 	handle character varying(26) not null,
+	position character varying (256),
 	comment character varying (256),
 	created_at timestamp not null,
 	primary key (id),

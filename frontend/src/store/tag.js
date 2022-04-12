@@ -16,5 +16,12 @@ export const tagStore = defineStore('tag', {
 		add(tag) {
 			this.tags.push(tag);
 		},
+		get(handle) {
+			for (let i = 0; i < this.tags.length; i++) {
+				if (handle == this.tags[i].handle)
+					return this.tags[i];
+			}
+			return null;
+		},
 	}
 });
