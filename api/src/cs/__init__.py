@@ -4,9 +4,11 @@ import flask.json
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 from flask_restful import Resource, Api, reqparse, fields, marshal_with
+from celery import Celery
 import psycopg2
 import psycopg2.extras
 import json
+import os
 from datetime import datetime
 from pprint import pprint as D
 
@@ -18,9 +20,11 @@ class DTJsonEncoder(json.JSONEncoder):
 
 app = Flask(__name__)
 app.json_encoder = DTJsonEncoder
-socketio = SocketIO(app, cors_allowed_origins='*', logger=True, json=flask.json)
+socketio = SocketIO(app, cors_allowed_origins='*', logger=True, json=flask.json,
+	message_queue=os.environ['REDIS_URL'])
 cors = CORS(app, resources={ r"/*" : { 'origins' : [ 'http://localhost:3000' ] } })
 api = Api(app, errors={})
+celery_app = Celery(broker=os.environ['REDIS_URL'], backend=os.environ['REDIS_URL'])
 
 @api.representation('application/json')
 def output_json(data, code, headers=None):
@@ -29,6 +33,7 @@ def output_json(data, code, headers=None):
 	return resp
 
 from cs.model import setup, media, tag, tagging
+from cs.background import tasks
 
 media_fields = {
 	'handle' : fields.String,
@@ -128,6 +133,11 @@ def push_index():
 def push_static(path=None):
 	D(f"static, path={path}")
 	return send_from_directory('../../../frontend/dist', path)
+
+@app.route('/bar', methods=[ 'GET' ])
+def bar():
+	tasks.cookle.apply_async()
+	return "ok", 200
 
 @app.route('/foo', methods=[ 'GET' ])
 def hello():

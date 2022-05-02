@@ -23,13 +23,16 @@ create table "media"
 	handle character varying(26) not null,
 	filename character varying(256) not null,
 	path character varying(1024) not null,
+	upstream_handle character varying(256) not null,
+	size_bytes int,
+	checksum character varying(64) not null,
 	description character varying(256),
 	created_at timestamp not null,
 	primary key(id),
 	constraint media_media_type_fk foreign key (media_type_id) references media_type (id)
 );
 create unique index media_handle_idx on media (handle);
-
+/*
 insert into "media" ("handle", "media_type_id", "filename", "path", "description", "created_at") values (
 	'01G0D3V26XMAZ8PV6C5SDXPKXV',
 	(select id from media_type where name='TEXT'),
@@ -62,6 +65,7 @@ insert into "media" ("handle", "media_type_id", "filename", "path", "description
 	'Video of an owl',
 	NOW()
 );
+*/
 
 create table "tag"
 (

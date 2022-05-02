@@ -11,3 +11,6 @@ gevent
 gevent-websocket
 wsaccel
 python-ulid
+ffmpeg-python
+google-api-python-client
+pypng
