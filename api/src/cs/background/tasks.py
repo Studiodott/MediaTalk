@@ -126,7 +126,6 @@ def sync():
 	aws_region = os.environ['CONF_AWS_REGION']
 
 	try:
-		"""
 		# set up the sync
 		drive_service = discovery.build('drive', 'v3', developerKey=api_key)
 
@@ -164,6 +163,7 @@ def sync():
 				'mimeType' : 'video/mp4',
 			},
 		]
+		"""
 	except Exception as e:
 		print(f"error while setting up drive: {e}")
 		return False
@@ -202,16 +202,16 @@ def sync():
 
 			# commence download
 			fdesc['status'] = 'downloading'
-			"""
 			drive_req = drive_service.files().get_media(fileId=f['id'])
 
 			drive_downloader = http.MediaIoBaseDownload(temp_files['original'], drive_req)
 			done = False
 			while not done:
 				status, done = drive_downloader.next_chunk()
-			"""
 			temp_files['original'].close()
+			"""
 			shutil.copyfile(path.join('/tmp/in', f['name']), temp_files['original'].name)
+			"""
 
 
 			stats = os.stat(temp_files['original'].name)
