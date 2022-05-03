@@ -14,7 +14,8 @@ export const mediaStore = defineStore('media', {
 			});
 		},
 		add(media) {
-			this.media.push(media);
+			this.media.splice(0, 0, media);
+			//this.media.push(media);
 		},
 	}
 });

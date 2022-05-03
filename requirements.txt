@@ -14,3 +14,4 @@ python-ulid
 ffmpeg-python
 google-api-python-client
 pypng
+boto3

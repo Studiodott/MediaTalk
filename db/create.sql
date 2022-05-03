@@ -26,6 +26,8 @@ create table "media"
 	upstream_handle character varying(256) not null,
 	size_bytes int,
 	checksum character varying(64) not null,
+	url_original character varying(256) not null,
+	url_description character varying(256),
 	description character varying(256),
 	created_at timestamp not null,
 	primary key(id),

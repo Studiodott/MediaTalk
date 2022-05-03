@@ -6,7 +6,8 @@ from cs import app
 from cs.model.setup import key
 
 F = [ 'id', 'upstream_handle', 'media_type_id', 'handle', 'filename',
-	'path', 'size_bytes', 'checksum', 'description', 'created_at' ]
+	'path', 'size_bytes', 'checksum', 'description', 'url_original',
+	'url_description', 'created_at' ]
 
 def list():
 	q = """
@@ -68,6 +69,8 @@ def create(args):
 			"size_bytes",
 			"checksum",
 			"description",
+			"url_original",
+			"url_description",
 			"created_at"
 		) VALUES (
 			%(handle)s,
@@ -80,6 +83,8 @@ def create(args):
 			%(size_bytes)s,
 			%(checksum)s,
 			%(description)s,
+			%(url_original)s,
+			%(url_description)s,
 			NOW()
 		);"""
 
@@ -92,6 +97,8 @@ def create(args):
 		'size_bytes' : args['size_bytes'],
 		'checksum' : args['checksum'],
 		'description' : args['description'],
+		'url_original' : args['url_original'],
+		'url_description' : args['url_description'],
 	})
 
 	return handle

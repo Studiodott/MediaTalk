@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@oruga-ui/oruga-next": "^0.5.5",
+    "@oruga-ui/theme-bulma": "^0.2.5",
     "pinia": "^2.0.13",
     "vue": "^3.2.31",
     "vue-3-socket.io": "^1.0.5"

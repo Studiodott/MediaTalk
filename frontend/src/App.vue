@@ -1,9 +1,14 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
-  <div
-    v-for="(m, m_index) in media_store.media" :key="m_index">
-    <Media v-bind="m"/>
-  </div>
+  <section class="container">
+    <div class="columns is-multiline">
+      <div
+        class="column is-third"
+        v-for="(m, m_index) in media_store.media" :key="m_index">
+        <Media v-bind="m"/>
+      </div>
+    </div>
+  </section>
 </template>
 
 <script>
@@ -19,10 +24,10 @@ export default {
     Media
   },
   setup : function() {
-    const tag_store = tagStore();
-    tag_store.load();
     const media_store = mediaStore();
     media_store.load();
+    const tag_store = tagStore();
+    tag_store.load();
     const tagging_store = taggingStore();
     tagging_store.load();
     return {

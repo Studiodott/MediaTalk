@@ -8,9 +8,12 @@ import png
 import json
 import os
 import hashlib
+import boto3
+import shutil
+from flask import g
+from tempfile import NamedTemporaryFile
 from os import path
 from apiclient import discovery, http
-
 
 def db_load(path):
 	try:
@@ -38,20 +41,16 @@ def hash_file(filepath):
 	
 	return h.hexdigest()
 
-def process_audio(filename):
+def process_audio(in_file_name, out_file):
 
 	try:
 		P = int(os.environ['CONF_APP_SNAPSHOT_WIDTH'])
 	except:
 		P = 640
 
-	filename_snapshot = f'{filename}_waveform.png'
-	path_original = path.join(os.environ['CONF_APP_MEDIA_PATH'], 'original')
-	path_generated = path.join(os.environ['CONF_APP_MEDIA_PATH'], 'generated')
-
 	# get ffmpeg to decode the audio (part) of the file to PCM
 	out, _ = (ffmpeg
-		.input(path.join(path_original, filename))
+		.input(in_file_name)
 		.output('-', format='s8', acodec='pcm_s8', ac=1, ar='8k')
 		.overwrite_output()
 		.run(capture_stdout=True)
@@ -100,13 +99,7 @@ def process_audio(filename):
 
 	# and dish it out to a PNG file
 	img = png.Writer(w, h, palette=palette, bitdepth=1)
-	f = open(path.join(path_generated, filename_snapshot), 'wb')
-	img.write(f, pixels)
-
-	return {
-		'waveform_name' : filename_snapshot,
-		'waveform_path' : path.join(path_generated, filename_snapshot),
-	}
+	img.write(out_file, pixels)
 
 @celery_app.task
 def cookle():
@@ -119,26 +112,21 @@ def cookle():
 		g.db_commit = True
 		setup.db_wrapup(False)
 
-	for _ in range(5):
-		time.sleep(1)
-		socketio.emit('tag_created', 'yes', broadcast=True)
-
-
 @celery_app.task
 def sync():
 
 	path_original = path.join(os.environ['CONF_APP_MEDIA_PATH'], 'original')
 	path_generated = path.join(os.environ['CONF_APP_MEDIA_PATH'], 'generated')
+
 	api_key = os.environ['CONF_DRIVE_API_KEY']
 	folder_id = os.environ['CONF_DRIVE_FOLDER_ID']
 
-	try:
-		os.makedirs(path_original, exist_ok=True)
-		os.makedirs(path_generated, exist_ok=True)
-	except FileExistsError:
-		pass
+	aws_resource = boto3.resource('s3')
+	aws_bucket = os.environ['CONF_AWS_BUCKET']
+	aws_region = os.environ['CONF_AWS_REGION']
 
 	try:
+		"""
 		# set up the sync
 		drive_service = discovery.build('drive', 'v3', developerKey=api_key)
 
@@ -148,6 +136,34 @@ def sync():
 		}
 		drive_result = drive_service.files().list(**param).execute()
 		drive_files = drive_result.get('files')
+		"""
+		drive_files = [
+			{
+				'id' : '01G22CEZVY1NP1YS5V3J8SH1NK',
+				'name' : 'image_koeln.jpg',
+				'mimeType' : 'image/jpg',
+			},
+			{
+				'id' : '01G22CF3D1T8YMA28HPTBRZYH2',
+				'name' : 'text_lorem-ipsum.txt',
+				'mimeType' : 'text/foo',
+			},
+			{
+				'id' : '01G22CF4HPXPHCRMP2X4PW997W',
+				'name' : 'audio_jazzy.mp4',
+				'mimeType' : 'audio/mp4',
+			},
+			{
+				'id' : '01G22CF6DY3PM86BT9J7385NXF',
+				'name' : 'video_owl.mp4',
+				'mimeType' : 'video/mp4',
+			},
+			{
+				'id' : '01G22CF769DSC68ZKS8SK5SZGS',
+				'name' : 'BoldDimIbis.mp4',
+				'mimeType' : 'video/mp4',
+			},
+		]
 	except Exception as e:
 		print(f"error while setting up drive: {e}")
 		return False
@@ -172,38 +188,87 @@ def sync():
 			'description' : '',
 		}
 
+		temp_files = {}
+
 		try:
 
 			# figure out its type, trust upstream on this
 			fdesc['media_type'] = f['mimeType'].split('/')[0].upper()
 
+			# set up a temp file for this
+			temp_files['original'] = NamedTemporaryFile(delete=False)
+
+			print(f"handling as temp file {temp_files['original'].name}")
+
 			# commence download
 			fdesc['status'] = 'downloading'
+			"""
 			drive_req = drive_service.files().get_media(fileId=f['id'])
-			with open(fdesc['path'], 'wb') as out:
-				drive_downloader = http.MediaIoBaseDownload(out, drive_req)
-				done = False
-				while not done:
-					status, done = drive_downloader.next_chunk()
-			stats = os.stat(path.join(path_original, f['name']))
+
+			drive_downloader = http.MediaIoBaseDownload(temp_files['original'], drive_req)
+			done = False
+			while not done:
+				status, done = drive_downloader.next_chunk()
+			"""
+			temp_files['original'].close()
+			shutil.copyfile(path.join('/tmp/in', f['name']), temp_files['original'].name)
+
+
+			stats = os.stat(temp_files['original'].name)
 			fdesc['size_bytes'] = stats.st_size
 			print(f"  saved {stats.st_size} bytes")
 
 			# hash it
 			fdesc['status'] = 'hashing'
-			fdesc['checksum'] = hash_file(fdesc['path'])
+			fdesc['checksum'] = hash_file(temp_files['original'].name)
 
 			# handle it
-			fdesc['status'] = 'processing'
-			if fdesc['media_type'] in [ 'AUDIO', 'VIDEO' ]:
-				fdesc['media_desc'] = process_audio(fdesc['name'])
+			try:
+				fdesc['status'] = 'processing'
+				if fdesc['media_type'] in [ 'AUDIO', 'VIDEO' ]:
+					temp_files['waveform'] = NamedTemporaryFile(delete=False)
+					process_audio(temp_files['original'].name, temp_files['waveform'])
+					temp_files['waveform'].close()
+			except Exception as e:
+				print(f"error processing file: {e}")
+
+			# upload the original
+			with open(temp_files['original'].name, 'rb') as f:
+				aws_path = path.join(
+					os.environ['CONF_APP_MEDIA_PATH'],
+					'original',
+					fdesc['checksum']
+				)
+				aws_resource.Bucket(aws_bucket).put_object(
+					Key=aws_path, Body=f)
+				fdesc['url_original'] = f"https://{aws_bucket}.s3.{aws_region}.amazonaws.com/{aws_path}"
+
+			# upload the waveform, if existing
+			if 'waveform' in temp_files:
+				with open(temp_files['waveform'].name, 'rb') as f:
+					aws_path = path.join(
+						os.environ['CONF_APP_MEDIA_PATH'],
+						'generated',
+						f"{fdesc['checksum']}_waveform"
+					)
+					aws_resource.Bucket(aws_bucket).put_object(
+						Key=aws_path, Body=f)
+					fdesc['url_description'] = f"https://{aws_bucket}.s3.{aws_region}.amazonaws.com/{aws_path}"
+			else:
+				fdesc['url_description'] = ''
 
 			fdesc['status'] = 'ok'
-		except Exception as e:
+		except IOError as e:
+			print(f"ERROR {e}")
 			fdesc['error'] = f"while {fdesc['status']}: {e}"
 			fdesc['status'] = 'failed'
-
-		handle = media.create(fdesc)
-		socketio.emit('media_created', media.get(handle), broadcast=True)
+		else:
+			handle = media.create(fdesc)
+			g.db_con.commit()
+			socketio.emit('media_created', media.get(handle), broadcast=True)
+		finally:
+			for what, where in temp_files.items():
+				print(f"removing temp_file {where.name} for {what}")
+				os.remove(where.name)
 
 	return True

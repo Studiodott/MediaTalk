@@ -40,6 +40,9 @@ media_fields = {
 	'media_type' : fields.String,
 	'filename' : fields.String,
 	'description' : fields.String,
+	'checksum' : fields.String,
+	'url_original' : fields.String,
+	'url_description' : fields.String,
 	'created_at' : fields.DateTime(dt_format='iso8601'),
 }
 media_list_fields = {
