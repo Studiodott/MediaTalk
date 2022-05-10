@@ -115,6 +115,7 @@ class TaggingManagerResource(Resource):
 	@marshal_with(tagging_fields)
 	def post(self):
 		args = tagging_parser.parse_args()
+		print(args)
 		handle = tagging.create(args['media_handle'], args['tag_handle'], args['position'], args['comment'])
 		ti = tagging.get(handle)
 		socketio.emit('tagging_created', ti)

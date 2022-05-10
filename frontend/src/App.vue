@@ -1,11 +1,19 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
-  <section class="container">
-    <div class="columns is-multiline">
-      <div
-        class="column is-third"
-        v-for="(m, m_index) in media_store.media" :key="m_index">
-        <Media v-bind="m"/>
+  <section class="section">
+    <div class="container">
+      <div class="columns">
+        <div
+          class="column is-three-quarters is-flex is-flex-direction-column is-align-items-stretch">
+          <Media
+            class="column is-full mb-6"
+            v-for="(media, media_index) in media_store.media"
+            :key="media_index"
+            v-bind="media"/>
+        </div>
+        <div
+          class="column is-one-quarter">
+        </div>
       </div>
     </div>
   </section>
@@ -38,7 +46,6 @@ export default {
   },
   sockets: {
     tag_created : function(data) {
-      console.log('tag_created(data='+data+')');
       this.tag_store.add(data);
     },
     media_created : function(data) {

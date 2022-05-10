@@ -17,21 +17,23 @@ export const taggingStore = defineStore('tagging', {
 			this.taggings = this.taggings.filter((e_tagging) => {
 				return tagging.handle != e_tagging.handle;
 			});
-			this.taggings.push(tagging);
+			this.taggings.splice(0, 0, tagging);
 		},
 		async create(media_handle, tag_handle, position, comment) {
-			window.fetch(`{api_target}/api/tagging/`, {
+			let t = await window.fetch(api_target + '/api/tagging', {
 				method : 'POST',
 				headers : { 'Content-Type' : 'application/json' },
 				body : JSON.stringify({
 					media_handle : media_handle,
 					tag_handle : tag_handle,
+					'position' : JSON.stringify(position),
 					comment : comment,
 				}),
 			}).then(resp => resp.json())
-			.then(tagging => {
-				this.taggings.push(tagging);
+			.catch((error) => {
+				console.log("error while creating tagging: " + error);
 			});
+			return t;
 		},
 		getForMedia(media_handle) {
 			let filtered = this.taggings.filter((tagging) => {

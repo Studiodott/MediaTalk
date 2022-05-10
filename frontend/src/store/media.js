@@ -11,11 +11,14 @@ export const mediaStore = defineStore('media', {
 			.then(resp => resp.json())
 			.then(media => {
 				this.media = media.media;
+				console.log("loaded "+this.media.length);
 			});
 		},
 		add(media) {
+			this.media = this.media.filter((e_media) => {
+				return media.handle != e_media.handle;
+			});
 			this.media.splice(0, 0, media);
-			//this.media.push(media);
 		},
 	}
 });
