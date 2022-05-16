@@ -24,8 +24,10 @@
       </div>
       <div
         v-else-if="media_type == 'IMAGE'">
-        <img
-          v-bind:src="url_original">
+        <MediaImage
+          :highlight="highlight"
+          @selected="media_selected"
+          v-bind:src="url_original"/>
       </div>
       <div
         v-else-if="media_type == 'TEXT'">
@@ -35,14 +37,19 @@
     </div>
     <div
       class="column is-one-third">
-      <TagChooser
-        :current_position="current_position"
+      <TagChooserStatic
+        :selection="selection"
         :media_handle="handle"/>
       <p>Existing tags:</p>
       <ul>
         <li
           v-for="(tagging_positions, tag_name) in getTagsForMedia">
-          {{ tag_name }} at <PositionDisplay v-for="p in tagging_positions" :position="p" />
+          {{ tag_name }}
+          <ul>
+            <li v-for="p in tagging_positions">
+              <a @click="highlight_tagging(p)">here</a>
+            </li>
+          </ul><!--<PositionDisplay v-for="p in tagging_positions" :position="p" />-->
         </li>
         <!--
         <li
@@ -60,8 +67,10 @@
 import { tagStore } from '@/store/tag.js';
 import { taggingStore } from '@/store/tagging.js';
 import TagChooser from '@/components/TagChooser.vue';
+import TagChooserStatic from '@/components/TagChooserStatic.vue';
 import MediaText from '@/components/MediaText.vue';
 import MediaVideo from '@/components/MediaVideo.vue';
+import MediaImage from '@/components/MediaImage.vue';
 import PositionDisplay from '@/components/PositionDisplay.vue';
 
 export default {
@@ -69,12 +78,16 @@ export default {
   data : function() {
     return {
       current_position : null,
+      selection : undefined,
+      highlight : undefined,
     };
   },
   components : {
     TagChooser,
+    TagChooserStatic,
     MediaText,
     MediaVideo,
+    MediaImage,
     PositionDisplay,
   },
   setup : function() {
@@ -96,6 +109,14 @@ export default {
   methods : {
     update_current_position : function(p) {
       this.current_position = p;
+    },
+    media_selected(selection) {
+      console.log(selection);
+      this.selection = selection;
+    },
+    highlight_tagging : function(p) {
+      console.log(p);
+      this.highlight = p;
     },
   },
   computed : {

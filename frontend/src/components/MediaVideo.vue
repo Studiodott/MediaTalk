@@ -81,7 +81,7 @@ export default {
       let when = this.$refs.actual_video.currentTime;
       this.marker_set(when);
       this.$emit('current_position', {
-        'what' : 'timestamp',
+        'what' : 'point',
         'time_seconds' : when,
       });
     },
