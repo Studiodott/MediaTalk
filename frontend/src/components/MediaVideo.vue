@@ -16,7 +16,8 @@
         id="timing_waveform"
         ref="timing_waveform"
         v-if="waveform.length > 0"
-        v-bind:src="waveform">
+        :src="waveform"
+        @load="image_loaded">
       <canvas
         ref="timing_timeline"
         id="timing_timeline"/>
@@ -29,6 +30,11 @@ import { nextTick } from 'vue';
 import { tagStore } from '@/store/tag.js';
 
 const FPS = 25;
+const FILL_STYLE = 'rgba(255, 165, 0, 0.3)';
+const STROKE_STYLE = 'rgb(255, 165, 0)';
+const FILL_STYLE_HIGHLIGHT = 'rgba(165, 255, 0, 0.3)';
+const STROKE_STYLE_HIGHLIGHT = 'rgb(165,255, 0)';
+
 
 export default {
   name : 'MediaVideo',
@@ -41,17 +47,35 @@ export default {
   props : [
     'src',
     'waveform',
+    'highlight',
   ],
   emits : [
-    'current_position',
+    'selected',
+    'advanced'
   ],
   setup : function() {
     const tag_store = tagStore();
     return { tag_store };
   },
+  watch : {
+    highlight : {
+      handler : function(new_highlight) {
+       console.log(new_highlight);
+       console.log("REDRAWING");
+       if (new_highlight && new_highlight.what == 'point') {
+         this.set_position(parseFloat(new_highlight.at));
+       } else if (new_highlight && new_highlight.what == 'range') {
+         this.set_position(parseFloat(new_highlight.from));
+       }
+       this.redraw();
+      },
+      deep : true,
+    },
+  },
   mounted : function() {
     this.$refs.actual_video.addEventListener('durationchange', (e) => {
       this.duration = e.target.duration;
+      console.log("GOT TIME");
     });
     this.$refs.actual_video.addEventListener('playing', (e) => {
       this.started_playing();
@@ -63,26 +87,26 @@ export default {
       let when = this.timeline_resolve_click(event.clientX, event.clientY);
       this.set_position(when);
     });
-
-    nextTick(() => {
-      this.$emit('current_position', {
-        'what' :' timestamp',
-        'time_seconds' : 0.0,
-      });
-    });
   },
   methods : {
+    // when the image is loaded, resize the containing div so that
+    // it (and the canvas) fit
+    image_loaded : function() {
+      let waveform = this.$refs.timing_waveform;
+      let timeline = this.$refs.timing_timeline;
+      timeline.width = waveform.clientWidth;
+      timeline.height = waveform.clientHeight;
+    },
     set_position : function(when) {
-      console.log("setting time to "+when);
       this.$refs.actual_video.currentTime = when;
       this.update_position();
     },
     update_position : function() {
       let when = this.$refs.actual_video.currentTime;
-      this.marker_set(when);
-      this.$emit('current_position', {
+      this.redraw();
+      this.$emit('advanced', {
         'what' : 'point',
-        'time_seconds' : when,
+        'at' : when,
       });
     },
     started_playing : function() {
@@ -91,24 +115,20 @@ export default {
       }, 1000 / FPS);
     },
     stopped_playing : function() {
-      clearInterval(this.playing_ctx);
       console.log("STOP");
+      clearInterval(this.playing_ctx);
     },
     timeline_resolve_click : function(mouse_x, mouse_y) {
       if (this.duration == undefined) {
         // we have no known duration, do nothing yet
         return;
       }
-      console.log("click at x="+mouse_x+" y="+mouse_y);
       let canvas_pos = this.$refs.timing_timeline.getBoundingClientRect();
       mouse_x -= canvas_pos.left;
       mouse_y -= canvas_pos.top;
-      console.log("click at x="+mouse_x+" y="+mouse_y+ " adjusted");
-      let when = (mouse_x / canvas_pos.width) * this.duration;
-      console.log("="+when + " of "+this.duration);
-      return when;
+      return (mouse_x / canvas_pos.width) * this.duration;
     },
-    marker_set : function(when) {
+    redraw : function() {
       if (this.duration == undefined) {
         // we have no known duration, do nothing yet
         return;
@@ -116,13 +136,36 @@ export default {
       let w = this.$refs.timing_timeline.width;
       let h = this.$refs.timing_timeline.height;
 
+      let when = this.$refs.actual_video.currentTime;
       let pos = parseInt((when / this.duration) * w);
 
       let ctx = this.$refs.timing_timeline.getContext('2d');
 
       ctx.clearRect(0, 0, w, h);
-      ctx.fillRect(pos, 0, 1, h);
 
+      // the highlight
+      ctx.strokeStyle = STROKE_STYLE_HIGHLIGHT;
+      ctx.fillStyle = FILL_STYLE_HIGHLIGHT;
+      if (this.highlight) {
+        if (this.highlight.what == 'point') {
+          let pos = parseInt((parseFloat(this.highlight.at) / this.duration) * w);
+          console.log("pos="+pos);
+          ctx.fillRect(pos, 0, 1, h);
+        } else if (this.highlight.what == 'range') {
+          let from = (parseFloat(this.highlight.from) / this.duration) * w;
+          let to = (parseFloat(this.highlight.to) / this.duration) * w;
+          console.log(`from=${from} to=${to}`);
+          from = parseInt(from);
+          to = parseInt(to);
+          ctx.fillRect(from, 0, to-from, h);
+          ctx.strokeRect(from, 0, to-from, h);
+        }
+      }
+
+      // the current position
+      ctx.strokeStyle = STROKE_STYLE;
+      ctx.fillStyle = FILL_STYLE;
+      ctx.fillRect(pos, 0, 2, h);
     },
   },
 };

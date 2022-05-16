@@ -7,9 +7,10 @@
       <div
         v-if="media_type == 'VIDEO'">
         <MediaVideo
-          @current_position="update_current_position"
-          v-bind:src="url_original"
-          v-bind:waveform="url_description"/>
+          @advanced="advanced"
+          :highlight="highlight"
+          :src="url_original"
+          :waveform="url_description"/>
       </div>
       <div
         v-else-if="media_type == 'AUDIO'">
@@ -37,7 +38,18 @@
     </div>
     <div
       class="column is-one-third">
+      <!--
+      <TagChooserTimeline
+        :selection="selection"
+        :last_advance="last_advance"
+        :media_handle="handle"/>
+      -->
+      <TagChooserTimeline
+        v-if="media_type == 'VIDEO' || media_type == 'AUDIO'"
+        :last_advance="last_advance"
+        :media_handle="handle"/>
       <TagChooserStatic
+        v-if="media_type == 'TEXT' || media_type == 'IMAGE'"
         :selection="selection"
         :media_handle="handle"/>
       <p>Existing tags:</p>
@@ -68,6 +80,7 @@ import { tagStore } from '@/store/tag.js';
 import { taggingStore } from '@/store/tagging.js';
 import TagChooser from '@/components/TagChooser.vue';
 import TagChooserStatic from '@/components/TagChooserStatic.vue';
+import TagChooserTimeline from '@/components/TagChooserTimeline.vue';
 import MediaText from '@/components/MediaText.vue';
 import MediaVideo from '@/components/MediaVideo.vue';
 import MediaImage from '@/components/MediaImage.vue';
@@ -77,14 +90,15 @@ export default {
   name : 'Media',
   data : function() {
     return {
-      current_position : null,
       selection : undefined,
       highlight : undefined,
+      last_advance : undefined,
     };
   },
   components : {
     TagChooser,
     TagChooserStatic,
+    TagChooserTimeline,
     MediaText,
     MediaVideo,
     MediaImage,
@@ -107,8 +121,8 @@ export default {
     console.log("mounted");
   },
   methods : {
-    update_current_position : function(p) {
-      this.current_position = p;
+    advanced : function(p) {
+      this.last_advance = p;
     },
     media_selected(selection) {
       console.log(selection);
