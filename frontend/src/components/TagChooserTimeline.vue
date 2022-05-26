@@ -16,7 +16,7 @@
     <div
       class="field">
       <o-radio
-        :disabled="!last_advance"
+        :disabled="!advance"
         v-model="selected"
         native-value="point">
         <div
@@ -38,7 +38,7 @@
     <div
       class="field">
       <o-radio
-        :disabled="!last_advance"
+        :disabled="!advance"
         v-model="selected"
         native-value="range">
         <div
@@ -145,7 +145,7 @@ export default {
       type : String,
       required : true,
     },
-    last_advance : {
+    advance : {
       type : Object,
       required : false,
       default() {
@@ -153,6 +153,9 @@ export default {
       },
     },
   },
+  emits : [
+    'selected',
+  ],
   setup : function() {
     const tag_store = tagStore();
     const tagging_store = taggingStore();
@@ -161,7 +164,7 @@ export default {
   mounted : function() {
   },
   watch : {
-    last_advance : {
+    advance : {
       handler : function(new_advance) {
         if (!new_advance) {
           this.selected = 'all';
@@ -184,17 +187,40 @@ export default {
   },
 
   methods : {
+    emit_selected() {
+      let arg = undefined;
+
+      if (this.selected == 'point') {
+        arg = {
+          what : 'point',
+          at : this.selected_at,
+        };
+      } else if (this.selected == 'range') {
+        arg = this.selected_from_locked ? {
+          what : 'range',
+          from : this.selected_from,
+          to : this.selected_to_locked ? this.selected_to : null,
+        } : undefined;
+      }
+      this.$emit('selected', arg);
+    },
     toggle_lock_point_at() {
       this.selected_at_locked = !this.selected_at_locked;
       this.selected = 'point';
+
+      this.emit_selected();
     },
     toggle_lock_range_from() {
       this.selected_from_locked = !this.selected_from_locked;
       this.selected = 'range';
+
+      this.emit_selected();
     },
     toggle_lock_range_to() {
       this.selected_to_locked = !this.selected_to_locked;
       this.selected = 'range';
+
+      this.emit_selected();
     },
     getFilteredTags(search) {
       this.filteredTags = this.tag_store.tags.filter(tag => {
@@ -210,6 +236,7 @@ export default {
       this.selected_at_locked = false;
       this.selected_from_locked = false;
       this.selected_to_locked = false;
+      this.emit_selected();
     },
     async commit() {
       let tag_handles = [];
@@ -243,7 +270,6 @@ export default {
       await Promise.all(tag_handles.map(async (tag_handle) => {
         let tagging = this.tagging_store.create(this.media_handle,
           tag_handle, position);
-        console.log(tagging);
       }));
 
       this.reset();
