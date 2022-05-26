@@ -30,11 +30,12 @@ import { nextTick } from 'vue';
 import { tagStore } from '@/store/tag.js';
 
 const FPS = 25;
-const FILL_STYLE = 'rgba(255, 165, 0, 0.3)';
-const STROKE_STYLE = 'rgb(255, 165, 0)';
+const FILL_STYLE_SELECTION = 'rgba(255, 165, 0, 0.3)';
+const STROKE_STYLE_SELECTION = 'rgb(255, 165, 0)';
 const FILL_STYLE_HIGHLIGHT = 'rgba(165, 255, 0, 0.3)';
-const STROKE_STYLE_HIGHLIGHT = 'rgb(165,255, 0)';
-
+const STROKE_STYLE_HIGHLIGHT = 'rgb(165, 255, 0)';
+const FILL_STYLE = 'rgba(165, 255, 166, 0.3)';
+const STROKE_STYLE = 'rgb(165, 255, 166)';
 
 export default {
   name : 'MediaVideo',
@@ -42,12 +43,17 @@ export default {
     return {
       duration : undefined,
       playing_ctx : undefined,
+      display : {
+        highlights : [],
+        selection : null,
+      },
     };
   },
   props : [
     'src',
     'waveform',
-    'highlight',
+    'selection',
+    'highlights',
   ],
   emits : [
     'selected',
@@ -58,24 +64,97 @@ export default {
     return { tag_store };
   },
   watch : {
-    highlight : {
-      handler : function(new_highlight) {
-       console.log(new_highlight);
-       console.log("REDRAWING");
-       if (new_highlight && new_highlight.what == 'point') {
-         this.set_position(parseFloat(new_highlight.at));
-       } else if (new_highlight && new_highlight.what == 'range') {
-         this.set_position(parseFloat(new_highlight.from));
-       }
-       this.redraw();
+    // upon highlights change, flush out the old display list and rebuild it
+    // to look like the given highlights but then in pixel coordinates
+    highlights : {
+      handler : function(new_highlights) {
+        let highlights = [];
+
+        // build up a new list & install it
+        new_highlights.forEach((h) => {
+          switch (h.what) {
+            case 'all':
+                break;
+            case 'point' : 
+                highlights.push({
+                  'what' : 'point',
+                  'at' : this.delogicalize_timestamp(h.at),
+                });
+                break;
+            case 'range' : 
+                highlights.push({
+                  'what' : 'range',
+                  'from' : this.delogicalize_timestamp(h.from),
+                  'to' : this.delogicalize_timestamp(h.to),
+                });
+                break;
+            default:
+                console.log(`error: unknown type of highlight "${h.what}"`);
+          }
+        });
+        this.display.highlights = highlights;
+
+        // if there is a first, jump towards it
+        if (new_highlights && new_highlights.length) {
+          let first = new_highlights[0];
+          switch (first.what) {
+            case 'all':
+                break;
+            case 'point':
+                this.set_position(parseFloat(first.at));
+                break;
+            case 'range':
+                this.set_position(parseFloat(first.from));
+                break;
+            default:
+                console.log(`error: don't know how to handle highlight of type "${first.what}"`);
+                break;
+          }
+        }
+
+        this.redraw();
       },
+      // no need to deep-follow, we need list changes, not item changes
+      deep : false,
+    },
+    // same for the selection, but take care that it could be a range with
+    // the endpoint unspecified (id est, still being decided by user)
+    selection : {
+      handler : function(new_selection) {
+        if (!new_selection) {
+          this.display.selection = null;
+          return;
+        }
+
+        switch (new_selection.what) {
+          case 'all':
+              break;
+          case 'point':
+              this.display.selection = {
+                what : 'point',
+                at : this.delogicalize_timestamp(new_selection.at),
+              };
+              break;
+          case 'range':
+              this.display.selection = {
+                what : 'range',
+                from : new_selection.from ? this.delogicalize_timestamp(new_selection.from) : null,
+                to : new_selection.to ? this.delogicalize_timestamp(new_selection.to) : null,
+              };
+              break;
+          default:
+              console.log(`error: don't know how to handle selection of type "${new_selection.what}"`);
+              break;
+        }
+      },
+      // but we want to see all changes here, might be some timestamp changed
       deep : true,
     },
   },
   mounted : function() {
+    // follow the video player's actions
     this.$refs.actual_video.addEventListener('durationchange', (e) => {
       this.duration = e.target.duration;
-      console.log("GOT TIME");
     });
     this.$refs.actual_video.addEventListener('playing', (e) => {
       this.started_playing();
@@ -83,6 +162,7 @@ export default {
     this.$refs.actual_video.addEventListener('pause', (e) => {
       this.stopped_playing();
     });
+    // timeline clicks update the video position
     this.$refs.timing_timeline.addEventListener('click', (e) => {
       let when = this.timeline_resolve_click(event.clientX, event.clientY);
       this.set_position(when);
@@ -97,27 +177,32 @@ export default {
       timeline.width = waveform.clientWidth;
       timeline.height = waveform.clientHeight;
     },
+    // set the video's position, and fire off the updating handler
     set_position : function(when) {
       this.$refs.actual_video.currentTime = when;
       this.update_position();
     },
+    // upon position update, fire off the advanced event and redraw
     update_position : function() {
       let when = this.$refs.actual_video.currentTime;
-      this.redraw();
       this.$emit('advanced', {
         'what' : 'point',
         'at' : when,
       });
+      this.redraw();
     },
+    // when we start playing, we start an interval timer to update the
+    // position at FPS
     started_playing : function() {
       this.playing_ctx = setInterval(() => {
         this.update_position();
       }, 1000 / FPS);
     },
+    // and when we stop playing, we stop the interval timer
     stopped_playing : function() {
-      console.log("STOP");
       clearInterval(this.playing_ctx);
     },
+    // turn a click event's clientX/Y on the timeline into a timestamp
     timeline_resolve_click : function(mouse_x, mouse_y) {
       if (this.duration == undefined) {
         // we have no known duration, do nothing yet
@@ -128,6 +213,17 @@ export default {
       mouse_y -= canvas_pos.top;
       return (mouse_x / canvas_pos.width) * this.duration;
     },
+    // translate a timestamp to a pixel offset in the timeline
+    delogicalize_timestamp : function(ts) {
+      if (this.duration == undefined) {
+        // we have no known duration, do nothing yet
+        return;
+      }
+      let w = this.$refs.timing_timeline.width;
+      let pos = parseInt((parseFloat(ts) / this.duration) * w);
+      return pos;
+    },
+    // main drawing logic
     redraw : function() {
       if (this.duration == undefined) {
         // we have no known duration, do nothing yet
@@ -143,29 +239,63 @@ export default {
 
       ctx.clearRect(0, 0, w, h);
 
-      // the highlight
-      ctx.strokeStyle = STROKE_STYLE_HIGHLIGHT;
-      ctx.fillStyle = FILL_STYLE_HIGHLIGHT;
-      if (this.highlight) {
-        if (this.highlight.what == 'point') {
-          let pos = parseInt((parseFloat(this.highlight.at) / this.duration) * w);
-          console.log("pos="+pos);
-          ctx.fillRect(pos, 0, 1, h);
-        } else if (this.highlight.what == 'range') {
-          let from = (parseFloat(this.highlight.from) / this.duration) * w;
-          let to = (parseFloat(this.highlight.to) / this.duration) * w;
-          console.log(`from=${from} to=${to}`);
-          from = parseInt(from);
-          to = parseInt(to);
+      function draw(something) {
+        if (something.what == 'point') {
+          let pos = something.at;
+          ctx.beginPath();
+          ctx.moveTo(pos, 0);
+          ctx.lineTo(pos, h);
+          ctx.stroke();
+        } else if (something.what == 'range') {
+          let from = something.from;
+          let to = something.to;
           ctx.fillRect(from, 0, to-from, h);
           ctx.strokeRect(from, 0, to-from, h);
+        }
+      }
+
+      // the highlights
+      let highlights = this.display.highlights;
+      if (highlights) {
+        ctx.strokeStyle = STROKE_STYLE_HIGHLIGHT;
+        ctx.fillStyle = FILL_STYLE_HIGHLIGHT;
+        ctx.lineWidth = 2;
+
+        for (let i = 0; i < highlights.length; i++) {
+          let h = highlights[i];
+          draw(h);
+        }
+      }
+
+      // the selection
+      let selection = this.display.selection;
+      if (selection) {
+        // relevant style
+        ctx.fillStyle = FILL_STYLE_SELECTION;
+        ctx.strokeStyle = STROKE_STYLE_SELECTION;
+        ctx.lineWidth = 2;
+
+        // draw a point or a range
+        if (selection.what == 'point') {
+          draw(selection);
+        } else if (selection.what == 'range') {
+          draw({
+            what : 'range',
+            from : selection.from,
+            to : selection.to || pos,
+          });
         }
       }
 
       // the current position
       ctx.strokeStyle = STROKE_STYLE;
       ctx.fillStyle = FILL_STYLE;
-      ctx.fillRect(pos, 0, 2, h);
+      ctx.lineWidth = 2;
+
+      draw({
+        what : 'point',
+        at : pos,
+      });
     },
   },
 };
