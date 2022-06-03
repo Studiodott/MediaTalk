@@ -5,7 +5,7 @@
     id="image_container">
     <img
       :src="src"
-      id="actual_image"
+      class="actual_image"
       @load="image_loaded"
       ref="actual_image"/>
     <canvas
@@ -16,7 +16,6 @@
 
 <script>
 import { nextTick } from 'vue';
-import { tagStore } from '@/store/tag.js';
 
 const MIN_DRAGGING_TIME = 500;
 const FILL_STYLE = 'rgba(255, 165, 0, 0.3)';
@@ -25,7 +24,7 @@ const FILL_STYLE_HIGHLIGHT = 'rgba(165, 255, 0, 0.3)';
 const STROKE_STYLE_HIGHLIGHT = 'rgb(165,255, 0)';
 
 export default {
-  name : 'MediaImage',
+  name : 'MediaDisplayImage',
   data : function() {
     return {
       last_mousedown : undefined,
@@ -43,8 +42,6 @@ export default {
     'selected',
   ],
   setup : function() {
-    const tag_store = tagStore();
-    return { tag_store };
   },
   watch : {
     // upon highlights change, flush out the old display list and rebuild it
@@ -195,6 +192,7 @@ export default {
       let selection = this.$refs.selection_layer;
 
       container.setAttribute('style', `width: ${image.clientWidth}px; height: ${image.clientHeight}px`);
+
       selection.width = image.clientWidth;
       selection.height = image.clientHeight;
     },
@@ -288,7 +286,7 @@ export default {
 #image_container {
   position: relative;
 }
-#actual_image {
+.actual_image {
   width: 100%;
   position: absolute;
 }

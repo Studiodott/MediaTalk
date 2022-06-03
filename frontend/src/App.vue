@@ -5,11 +5,35 @@
       <div class="columns">
         <div
           class="column is-three-quarters is-flex is-flex-direction-column is-align-items-stretch">
-          <Media
-            class="column is-full mb-6"
-            v-for="(media, media_index) in media_store.media"
-            :key="media_index"
-            v-bind="media"/>
+          <o-tabs
+            position="centered"
+            v-model="active_tab">
+            <o-tab-item
+              value="tagging"
+              label="Tagging">
+
+              <MediaTag
+                class="column is-full mb-6"
+                v-for="(media, media_index) in store.live.media"
+                :key="media_index"
+                v-bind="media"/>
+
+            </o-tab-item>
+
+            <o-tab-item
+              value="reporting"
+              label="Reporting">
+              <FilterChooser
+                class="column is-full mb-6"
+                />
+              <MediaDisplay
+                class="column is-full mb-6"
+                v-for="(media, media_index) in store.search_results.media"
+                :key="media_index"
+                v-bind="media"/>
+
+            </o-tab-item>
+          </o-tabs>
         </div>
         <div
           class="column is-one-quarter">
@@ -20,39 +44,40 @@
 </template>
 
 <script>
-import { tagStore } from '@/store/tag.js';
-import { taggingStore } from '@/store/tagging.js';
-import { mediaStore } from '@/store/media.js';
+import { Store } from '@/store/store.js';
 import Test from "./components/Test.vue";
-import Media from "./components/Media.vue";
+import MediaTag from "./components/MediaTag.vue";
+import MediaDisplay from "./components/MediaDisplay.vue";
+import FilterChooser from '@/components/FilterChooser.vue';
 export default {
   name : 'App',
   components : {
     Test,
-    Media
+    MediaTag,
+    MediaDisplay,
+    FilterChooser,
+  },
+  data : function() {
+    return {
+      active_tab : "tagging",
+    };
   },
   setup : function() {
-    const media_store = mediaStore();
-    media_store.load();
-    const tag_store = tagStore();
-    tag_store.load();
-    const tagging_store = taggingStore();
-    tagging_store.load();
+    const store = Store();
+    store.load();
     return {
-      tag_store,
-      media_store,
-      tagging_store,
+      store,
     };
   },
   sockets: {
     tag_created : function(data) {
-      this.tag_store.add(data);
+      this.store.add_tag(data);
     },
     media_created : function(data) {
-      this.media_store.add(data);
+      this.store.add_media(data);
     },
     tagging_created : function(data) {
-      this.tagging_store.add(data);
+      this.store.add_tagging(data);
     },
   },
   mounted : function() {

@@ -27,7 +27,6 @@
 
 <script>
 import { nextTick } from 'vue';
-import { tagStore } from '@/store/tag.js';
 
 const FPS = 25;
 const FILL_STYLE_SELECTION = 'rgba(255, 165, 0, 0.3)';
@@ -38,7 +37,7 @@ const FILL_STYLE = 'rgba(165, 255, 166, 0.3)';
 const STROKE_STYLE = 'rgb(165, 255, 166)';
 
 export default {
-  name : 'MediaVideo',
+  name : 'MediaDisplayVideo',
   data : function() {
     return {
       duration : undefined,
@@ -60,8 +59,6 @@ export default {
     'advanced'
   ],
   setup : function() {
-    const tag_store = tagStore();
-    return { tag_store };
   },
   watch : {
     // upon highlights change, flush out the old display list and rebuild it

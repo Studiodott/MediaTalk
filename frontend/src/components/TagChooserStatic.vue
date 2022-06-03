@@ -78,8 +78,7 @@
 </template>
 
 <script>
-import { tagStore } from '@/store/tag.js';
-import { taggingStore } from '@/store/tagging.js';
+import { Store } from '@/store/store.js';
 import PositionDisplay from '@/components/PositionDisplay.vue';
 
 export default {
@@ -92,7 +91,7 @@ export default {
       chosenPoint : 'none',
       chosenTags : [],
       comment : '',
-      filteredTags : this.tag_store.tags,
+      filteredTags : this.store.tags,
       selected : 'all',
       selected_at : undefined,
       selected_from : undefined,
@@ -112,9 +111,8 @@ export default {
     },
   },
   setup : function() {
-    const tag_store = tagStore();
-    const tagging_store = taggingStore();
-    return { tag_store, tagging_store };
+    const store = Store();
+    return { store };
   },
   mounted : function() {
   },
@@ -148,7 +146,7 @@ export default {
       }
     },
     getFilteredTags(search) {
-      this.filteredTags = this.tag_store.tags.filter(tag => {
+      this.filteredTags = this.store.tags.filter(tag => {
         return (
           tag.name.toString().toLowerCase().indexOf(search.toLowerCase()) >= 0
         );
@@ -167,7 +165,7 @@ export default {
       for (let i = 0; i < this.chosenTags.length; i++) {
         let chosen_tag = this.chosenTags[i];
         if (typeof chosen_tag === 'string') {
-          let new_tag = await this.tag_store.create(chosen_tag, '');
+          let new_tag = await this.store.create_tag(chosen_tag, '');
           tag_handles.push(new_tag.handle);
         } else {
           tag_handles.push(chosen_tag.handle);
@@ -188,7 +186,7 @@ export default {
 
       // tag them all on this media at this position
       await Promise.all(tag_handles.map(async (tag_handle) => {
-        let tagging = this.tagging_store.create(this.media_handle,
+        let tagging = this.store.create_tagging(this.media_handle,
           tag_handle, position);
         console.log(tagging);
       }));

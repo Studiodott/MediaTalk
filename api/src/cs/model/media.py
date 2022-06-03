@@ -56,6 +56,24 @@ def find_by_upstream_handle(upstream_handle):
 	})
 	return g.db_cur.fetchone() or None
 
+def find_by_tag_handle(tag_handle):
+	q = """
+		SELECT
+			mt.name as media_type,
+			""" + ', '.join([ f'm.{f} {f}' for f in F ]) + """
+		FROM
+			media m
+			INNER JOIN media_type mt ON m.media_type_id = mt.id
+			INNER JOIN tagging ti ON m.id = ti.media_id
+			INNER JOIN tag t ON ti.tag_id = t.id
+		WHERE
+			t.handle = %(tag_handle)s;
+		"""
+	g.db_cur.execute(q, {
+		'tag_handle' : tag_handle,
+	})
+	return g.db_cur.fetchall()
+
 def create(args):
 	handle = key()
 

@@ -18,10 +18,8 @@
 </template>
 
 <script>
-import { tagStore } from '@/store/tag.js';
-
 export default {
-  name : 'MediaText',
+  name : 'MediaDisplayText',
   data : function() {
     return {
       original_text : '',
@@ -37,8 +35,6 @@ export default {
     'selected',
   ],
   setup : function() {
-    const tag_store = tagStore();
-    return { tag_store };
   },
   mounted : async function() {
     console.log(this.$refs.actual_text);

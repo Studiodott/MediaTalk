@@ -6,7 +6,7 @@
       class="column is-two-thirds is-flex is-flex-direction-column is-align-items-stretch">
       <div
         v-if="media_type == 'VIDEO'">
-        <MediaVideo
+        <MediaTagVideo
           @advanced="advanced_by_media"
           :highlights="highlights_for_media"
           :selection="selection_for_media"
@@ -26,14 +26,14 @@
       </div>
       <div
         v-else-if="media_type == 'IMAGE'">
-        <MediaImage
+        <MediaTagImage
           :highlights="highlights_for_media"
           @selected="selected_by_media"
           v-bind:src="url_original"/>
       </div>
       <div
         v-else-if="media_type == 'TEXT'">
-        <MediaText
+        <MediaTagText
           :highlights="highlights_for_media"
           @selected="selected_by_media"
           v-bind:src="url_original"/>
@@ -41,12 +41,6 @@
     </div>
     <div
       class="column is-one-third">
-      <!--
-      <TagChooserTimeline
-        :selection="selection"
-        :advance_for_tagchooser="advance_for_tagchooser"
-        :media_handle="handle"/>
-      -->
       <TagChooserTimeline
         v-if="media_type == 'VIDEO' || media_type == 'AUDIO'"
         :advance="advance_for_tagchooser"
@@ -68,33 +62,24 @@
             <li v-for="p in tagging_positions">
               <a @click="highlight_taggings([ p ])">here</a>
             </li>
-          </ul><!--<PositionDisplay v-for="p in tagging_positions" :position="p" />-->
+          </ul>
         </li>
-        <!--
-        <li
-          v-for="(ti, ti_index) in tagging_store.getForMedia(handle)"
-          :key="ti_index">
-          {{ tag_store.get(ti.tag_handle).name }} at position {{ ti.position }}
-        </li>
-        -->
       </ul>
     </div>
   </div>
 </template>
 
 <script>
-import { tagStore } from '@/store/tag.js';
-import { taggingStore } from '@/store/tagging.js';
-import TagChooser from '@/components/TagChooser.vue';
+import { Store } from '@/store/store.js';
 import TagChooserStatic from '@/components/TagChooserStatic.vue';
 import TagChooserTimeline from '@/components/TagChooserTimeline.vue';
-import MediaText from '@/components/MediaText.vue';
-import MediaVideo from '@/components/MediaVideo.vue';
-import MediaImage from '@/components/MediaImage.vue';
+import MediaTagText from '@/components/MediaTagText.vue';
+import MediaTagVideo from '@/components/MediaTagVideo.vue';
+import MediaTagImage from '@/components/MediaTagImage.vue';
 import PositionDisplay from '@/components/PositionDisplay.vue';
 
 export default {
-  name : 'Media',
+  name : 'MediaTag',
   data : function() {
     return {
       selection_for_tagchooser : undefined,
@@ -104,18 +89,16 @@ export default {
     };
   },
   components : {
-    TagChooser,
     TagChooserStatic,
     TagChooserTimeline,
-    MediaText,
-    MediaVideo,
-    MediaImage,
+    MediaTagText,
+    MediaTagVideo,
+    MediaTagImage,
     PositionDisplay,
   },
   setup : function() {
-    const tagging_store = taggingStore();
-    const tag_store = tagStore();
-    return { tagging_store, tag_store };
+    const store = Store();
+    return { store };
   },
   props : [
     'handle',
@@ -146,11 +129,11 @@ export default {
   },
   computed : {
     getTagsForMedia() {
-      let taggings = this.tagging_store.getForMedia(this.handle);
+      let taggings = this.store.get_taggings_for_media(this.handle);
       let as_dict = {};
 
       taggings.forEach((ti) => {
-        let tag = this.tag_store.get(ti.tag_handle);
+        let tag = this.store.get_tag(ti.tag_handle);
         if (tag) {
           if (!(tag.name in as_dict)) {
             as_dict[tag.name] = [];

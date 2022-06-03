@@ -34,7 +34,7 @@ def output_json(data, code, headers=None):
 	resp.headers.extend(headers or {})
 	return resp
 
-from cs.model import setup, media, tag, tagging
+from cs.model import setup, media, tag, tagging, logic
 from cs.background import tasks
 
 media_fields = {
@@ -130,6 +130,22 @@ class TaggingResource(Resource):
 		return tagging.get(handle), 200
 api.add_resource(TaggingResource, '/api/tagging/<handle>')
 
+search_fields = {
+	'media' : fields.List(fields.Nested(media_fields)),
+	'tags' : fields.List(fields.Nested(tag_fields)),
+	'taggings' : fields.List(fields.Nested(tagging_fields)),
+}
+search_parser = reqparse.RequestParser()
+search_parser.add_argument('media_type', type=str, required=False, action='append')
+search_parser.add_argument('tag_handle', type=str, required=False, action='append')
+class SearchResource(Resource):
+	@marshal_with(search_fields)
+	def get(self):
+		args = search_parser.parse_args()
+		print("search args=")
+		print(args)
+		return logic.search(media_types=args['media_type'], tag_handles=args['tag_handle']), 200
+api.add_resource(SearchResource, '/api/search')
 @app.route('/', methods=[ 'GET' ])
 def push_index():
 	D(f"staticindex")
