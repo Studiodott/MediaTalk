@@ -18,18 +18,21 @@ export const Store = defineStore('Store', {
 		async load() {
 			window.fetch(api_target + '/api/media')
 			.then(resp => resp.json())
-			.then(media => {
-				this.live.media = media.media;
+			.then(data => {
+				this.live.media.splice(0);
+				data.media.forEach((e) => { this.live.media.push(e); });
 			});
 			window.fetch(api_target + '/api/tag')
 			.then(resp => resp.json())
-			.then(tags => {
-				this.live.tags = tags.tags;
+			.then(data => {
+				this.live.tags.splice(0);
+				data.tags.forEach((e) => { this.live.tags.push(e); });
 			});
 			window.fetch(api_target + '/api/tagging')
 			.then(resp => resp.json())
-			.then(taggings => {
-				this.live.taggings = taggings.taggings;
+			.then(data => {
+				this.live.taggings.splice(0);
+				data.taggings.forEach((e) => { this.live.taggings.push(e); });
 			});
 		},
 		async search(media_types, tag_handles) {
@@ -44,12 +47,14 @@ export const Store = defineStore('Store', {
 			window.fetch(api_target + '/api/search?' + p.toString())
 			.then(resp => resp.json())
 			.then(data => {
-				this.search_results.media = data.media;
-				this.search_results.tags = data.tags;
-				this.search_results.taggings = data.taggings;
+				this.search_results.media.splice(0);
+				data.media.forEach((e) => { this.search_results.media.push(e); });
+				this.search_results.tags.splice(0);
+				data.tags.forEach((e) => { this.search_results.tags.push(e); });
+				this.search_results.taggings.splice(0);
+				data.taggings.forEach((e) => { this.search_results.taggings.push(e); });
 			});
 		},
-
 		add_media(media) {
 			this.live.media = this.live.media.filter((e_media) => {
 				return media.handle != e_media.handle;
