@@ -3,6 +3,7 @@ flask
 flask-restful
 flask-socketio==4.3.2
 Werkzeug==2.0.3
+flask-jwt-extended
 flask-cors
 celery
 redis

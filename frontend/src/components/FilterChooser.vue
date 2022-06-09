@@ -22,6 +22,18 @@
         field="name"
         @typing="get_filtered_tags"/>
     </o-field>
+    <o-field
+      label="Tagged by">
+      <o-inputitems
+        v-model="chosen_users"
+        :data="filtered_users"
+        autocomplete
+        :allow-new="false"
+        :open-on-focus="true"
+        field="key"
+        @typing="get_filtered_users"/>
+    </o-field>
+
     <o-button
       variant="primary"
       @click="update">
@@ -41,6 +53,8 @@ export default {
       chosen_media_types : [ 'TEXT', 'VIDEO', 'AUDIO', 'IMAGE' ],
       chosen_tags : [],
       filtered_tags : this.store.live.tags,
+      chosen_users : [],
+      filtered_users : this.store.live.users,
     };
   },
   props : [
@@ -51,7 +65,7 @@ export default {
   },
   methods : {
     update : function() {
-      this.store.search(this.chosen_media_types, this.chosen_tags.map(t => t.handle));
+      this.store.search(this.chosen_media_types, this.chosen_tags.map(t => t.handle), this.chosen_users.map(u => u.handle));
     },
     get_filtered_tags : function(search) {
       this.filtered_tags = this.store.live.tags.filter(tag => {
@@ -60,7 +74,13 @@ export default {
         );
       });
     },
-
+    get_filtered_users : function(search) {
+      this.filtered_users = this.store.live.users.filter(user => {
+        return (
+          user.key.toString().toLowerCase().indexOf(search.toLowerCase()) >= 0
+        );
+      });
+    },
   },
 };
 </script>

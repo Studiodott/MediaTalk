@@ -51,7 +51,7 @@
       :allow-new="true"
       :data="filteredTags"
       field="name"
-      :allowDuplicates="true"
+      :allowDuplicates="false"
       @typing="getFilteredTags">
     </o-inputitems>
   </o-field>
@@ -91,7 +91,7 @@ export default {
       chosenPoint : 'none',
       chosenTags : [],
       comment : '',
-      filteredTags : this.store.tags,
+      filteredTags : this.store.live.tags,
       selected : 'all',
       selected_at : undefined,
       selected_from : undefined,
@@ -146,7 +146,7 @@ export default {
       }
     },
     getFilteredTags(search) {
-      this.filteredTags = this.store.tags.filter(tag => {
+      this.filteredTags = this.store.live.tags.filter(tag => {
         return (
           tag.name.toString().toLowerCase().indexOf(search.toLowerCase()) >= 0
         );
@@ -165,8 +165,13 @@ export default {
       for (let i = 0; i < this.chosenTags.length; i++) {
         let chosen_tag = this.chosenTags[i];
         if (typeof chosen_tag === 'string') {
-          let new_tag = await this.store.create_tag(chosen_tag, '');
-          tag_handles.push(new_tag.handle);
+          let tag = this.store.live.tags.find((t) => t.name.toLowerCase() == chosen_tag.toLowerCase());
+          if (!tag) {
+            // actually a real tag
+            console.log(`creating new tag for ${chosen_tag}`);
+            tag = await this.store.create_tag(chosen_tag, '');
+          }
+          tag_handles.push(tag.handle);
         } else {
           tag_handles.push(chosen_tag.handle);
         }

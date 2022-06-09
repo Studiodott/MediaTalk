@@ -13,13 +13,15 @@ def list():
 			ti.handle as handle,
 			m.handle as media_handle,
 			t.handle as tag_handle,
+			u.handle as user_handle,
 			ti.position as position,
 			ti.comment as comment,
 			ti.created_at as created_at
 		FROM
 			tagging ti
 			INNER JOIN media m ON ti.media_id = m.id
-			INNER JOIN tag t ON ti.tag_id = t.id;
+			INNER JOIN tag t ON ti.tag_id = t.id
+			INNER JOIN "user" u ON ti.user_id = u.id;
 		"""
 
 	g.db_cur.execute(q)
@@ -32,6 +34,7 @@ def get(handle):
 			ti.handle as handle,
 			m.handle as media_handle,
 			t.handle as tag_handle,
+			u.handle as user_handle,
 			ti.position as position,
 			ti.comment as comment,
 			ti.created_at as created_at
@@ -39,6 +42,7 @@ def get(handle):
 			tagging ti
 			INNER JOIN media m ON ti.media_id = m.id
 			INNER JOIN tag t ON ti.tag_id = t.id
+			INNER JOIN "user" u ON ti.user_id = u.id
 		WHERE
 			ti.handle=%(handle)s;
 		"""
@@ -48,7 +52,7 @@ def get(handle):
 	})
 	return g.db_cur.fetchone()
 
-def create(media_handle, tag_handle, position, comment=''):
+def create(media_handle, tag_handle, user_handle, position, comment=''):
 	handle = key()
 
 	q = """
@@ -56,6 +60,7 @@ def create(media_handle, tag_handle, position, comment=''):
 			"handle",
 			"media_id",
 			"tag_id",
+			"user_id",
 			"position",
 			"comment",
 			"created_at"
@@ -63,17 +68,21 @@ def create(media_handle, tag_handle, position, comment=''):
 			%(handle)s,
 			(select id from media where handle=%(media_handle)s),
 			(select id from tag where handle=%(tag_handle)s),
+			(select id from "user" where handle=%(user_handle)s),
 			%(position)s,
 			%(comment)s,
 			NOW()
 		);"""
-	
-	g.db_cur.execute(q, {
+
+	a = {
 		'handle' : handle,
 		'media_handle' : media_handle,
 		'tag_handle' : tag_handle,
+		'user_handle' : user_handle,
 		'position' : position,
 		'comment' : comment,
-	})
+	}
+	print(f'a={a}')
+	g.db_cur.execute(q, a)
 
 	return handle

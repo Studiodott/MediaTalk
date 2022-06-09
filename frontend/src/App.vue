@@ -1,7 +1,37 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
-  <section class="section">
-    <div class="container">
+  <section
+    class="login-screen section"
+    v-if="store.logged_in == false">
+    <div
+      class="flex is-justify-content-center is-align-items-center login-box">
+      <div
+        class="box">
+        <div class="field">
+          <label
+            class="label">
+            Your email address?
+          </label>
+          <div class="control">
+            <input
+              v-model="auth.email"
+              class="input"
+              type="text">
+          </div>
+        </div>
+        <o-button
+          @click="try_auth"
+          variant="primary">Let me in!</o-button>
+      </div>
+    </div>
+  </section>
+
+  <section
+    class="section"
+    v-if="store.logged_in">
+    <div
+      v-if="store.logged_in"
+      class="container">
       <div class="columns">
         <div
           class="column is-three-quarters is-flex is-flex-direction-column is-align-items-stretch">
@@ -45,6 +75,7 @@
 
 <script>
 import { Store } from '@/store/store.js';
+import { api_target } from '@/config.js';
 import Test from "./components/Test.vue";
 import MediaTag from "./components/MediaTag.vue";
 import MediaDisplay from "./components/MediaDisplay.vue";
@@ -60,6 +91,10 @@ export default {
   data : function() {
     return {
       active_tab : "tagging",
+      boon : this.store.boon,
+      auth : {
+        email : '',
+      },
     };
   },
   setup : function() {
@@ -76,15 +111,32 @@ export default {
     media_created : function(data) {
       this.store.add_media(data);
     },
+    user_created : function(data) {
+      this.store.add_user(data);
+    },
     tagging_created : function(data) {
+      console.log(`TAGGING data=${data}`);
       this.store.add_tagging(data);
     },
   },
   mounted : function() {
     this.$socket.emit('debug', 'new client');
   },
+  methods : {
+    foob : async function() {
+      await fetch(api_target + '/api/login', { method : 'POST' });
+    },
+    try_auth : async function() {
+      this.auth.trying = true;
+      await this.store.try_auth(this.auth.email);
+      this.auth.trying = false;
+    },
+  },
 };
 </script>
 
-<style>
+<style scoped>
+.login-screen {
+  height: 100%;
+}
 </style>

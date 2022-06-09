@@ -2,7 +2,7 @@ from flask import g
 from pprint import pprint as D
 from cs import app
 
-def search(media_types, tag_handles):
+def search(media_types, tag_handles, user_handles):
 
 	"""
 	media = []
@@ -22,6 +22,8 @@ def search(media_types, tag_handles):
 		filters.append("mt.name = ANY(%(media_types)s)")
 	if tag_handles and len(tag_handles):
 		filters.append("t.handle = ANY(%(tag_handles)s)")
+	if user_handles and len(user_handles):
+		filters.append("u.handle = ANY(%(user_handles)s)")
 	if not len(filters):
 		filters.append("1=1")
 
@@ -42,26 +44,33 @@ def search(media_types, tag_handles):
 			t.name as tag_name,
 			t.handle as tag_handle,
 			t.description as tag_description,
-			t.created_at as tag_created_at
+			t.created_at as tag_created_at,
+			u.handle as user_handle,
+			u.key as user_key,
+			u.created_at as user_created_at
 		FROM
 			media m
 			INNER JOIN media_type mt ON m.media_type_id = mt.id
 			INNER JOIN tagging ti ON m.id = ti.media_id
 			INNER JOIN tag t ON ti.tag_id = t.id
+			INNER JOIN "user" u ON ti.user_id = u.id
 		WHERE
 			""" + " AND ".join(filters) + """
 		ORDER BY
 			m.handle ASC,
-			t.handle ASC;"""
+			t.handle ASC,
+			u.handle ASC;"""
 
 	g.db_cur.execute(q, {
 		'media_types' : media_types,
 		'tag_handles' : tag_handles,
+		'user_handles' : user_handles,
 	})
 
-	media, taggings, tags = [], [], []
+	media, taggings, tags, users = [], [], [], []
 	last_media_handle = None
 	last_tag_handle = None
+	last_user_handle = None
 
 	for row in g.db_cur.fetchall():
 		if row['media_handle'] != last_media_handle:
@@ -84,6 +93,13 @@ def search(media_types, tag_handles):
 				'created_at' : row['tag_created_at'],
 			})
 			last_tag_handle = row['tag_handle']
+		if row['user_handle'] != last_user_handle:
+			users.append({
+				'handle' : row['user_handle'],
+				'key' : row['user_key'],
+				'created_at' : row['user_created_at'],
+			})
+			last_user_handle = row['user_handle']
 		taggings.append({
 			'media_handle' : row['media_handle'],
 			'tag_handle' : row['tag_handle'],
@@ -96,6 +112,7 @@ def search(media_types, tag_handles):
 	return {
 		'media' : media,
 		'tags' : tags,
+		'users' : users,
 		'taggings' : taggings,
 	}
 

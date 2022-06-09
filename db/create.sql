@@ -2,6 +2,17 @@ drop table if exists "tagging";
 drop table if exists "tag";
 drop table if exists "media";
 drop table if exists "media_type";
+drop table if exists "user";
+
+create table "user" (
+	id serial not null,
+	handle character varying(26) not null,
+	key character varying(64) not null,
+	created_at timestamp not null,
+	primary key (id)
+);
+create unique index user_handle_idx on "user" (handle);
+create unique index user_key_idx on "user" (key);
 
 create table "media_type" (
 	id serial not null,
@@ -73,7 +84,7 @@ create table "tag"
 (
 	id serial not null,
 	handle character varying(26) not null,
-	name character varying(128) not null,
+	name character varying(128) not null unique,
 	description character varying(256),
 	created_at timestamp not null,
 	primary key (id)
@@ -94,13 +105,15 @@ create table "tagging"
 	id serial not null,
 	media_id int,
 	tag_id int,
+	user_id int,
 	handle character varying(26) not null,
 	position character varying (256),
 	comment character varying (256),
 	created_at timestamp not null,
 	primary key (id),
 	constraint tagging_media_fk foreign key (media_id) references media (id),
-	constraint tagging_tag_fk foreign key (tag_id) references tag (id)
+	constraint tagging_tag_fk foreign key (tag_id) references tag (id),
+	constraint tagging_user_fk foreign key (user_id) references "user" (id)
 );
 create unique index tagging_handle_idx on tagging (handle);
 

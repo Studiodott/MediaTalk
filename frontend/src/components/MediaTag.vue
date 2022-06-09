@@ -53,14 +53,14 @@
       <p>Existing tags:</p>
       <ul>
         <li
-          v-for="(tagging_positions, tag_name) in getTagsForMedia">
+          v-for="(tagging_list, tag_name) in getTagsForMedia">
           <a
-            @click="highlight_taggings(tagging_positions)">
+            @click="highlight_taggings(tagging_list.map((e) => e.position))">
             {{ tag_name }}
           </a>
           <ul>
-            <li v-for="p in tagging_positions">
-              <a @click="highlight_taggings([ p ])">here</a>
+            <li v-for="meta in tagging_list">
+              <a @click="highlight_taggings([ meta.position  ])">here</a> by {{ meta.user.key }}
             </li>
           </ul>
         </li>
@@ -138,7 +138,14 @@ export default {
           if (!(tag.name in as_dict)) {
             as_dict[tag.name] = [];
           }
-          as_dict[tag.name].push(JSON.parse(ti.position));
+          as_dict[tag.name].push({
+            position : JSON.parse(ti.position),
+            tagging : ti,
+            user : this.store.live.users.find((u) => u.handle == ti.user_handle),
+          });
+          if (!as_dict[tag.name][as_dict[tag.name].length-1].user) {
+            console.log('BLOW UP');
+          }
         }
       });
       return as_dict;

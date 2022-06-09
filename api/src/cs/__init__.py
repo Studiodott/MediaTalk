@@ -4,12 +4,14 @@ import flask.json
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 from flask_restful import Resource, Api, reqparse, fields, marshal_with
+from flask_jwt_extended import JWTManager
+from flask_jwt_extended import ( create_access_token, set_access_cookies, jwt_required, get_jwt_identity )
 from celery import Celery
 import psycopg2
 import psycopg2.extras
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from pprint import pprint as D
 
 class DTJsonEncoder(json.JSONEncoder):
@@ -22,11 +24,14 @@ class DTJsonEncoder(json.JSONEncoder):
 
 app = Flask(__name__)
 app.json_encoder = DTJsonEncoder
+app.config['JWT_SECRET_KEY'] = os.environ['CONF_APP_SECRET']
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=356)
 socketio = SocketIO(app, cors_allowed_origins='*', logger=True, json=flask.json,
 	message_queue=os.environ['REDIS_URL'])
 cors = CORS(app, resources={ r"/*" : { 'origins' : [ 'http://localhost:3000' ] } })
 api = Api(app, errors={})
 celery_app = Celery(broker=os.environ['REDIS_URL'], backend=os.environ['REDIS_URL'])
+jwt = JWTManager(app)
 
 @api.representation('application/json')
 def output_json(data, code, headers=None):
@@ -34,8 +39,49 @@ def output_json(data, code, headers=None):
 	resp.headers.extend(headers or {})
 	return resp
 
-from cs.model import setup, media, tag, tagging, logic
+from cs.model import setup, media, tag, tagging, logic, user
 from cs.background import tasks
+
+login_fields = {
+	'access_token' : fields.String,
+}
+login_parser = reqparse.RequestParser()
+login_parser.add_argument('key', type=str, required=True)
+class LoginResource(Resource):
+	@marshal_with(login_fields)
+	def post(self):
+		args = login_parser.parse_args()
+		u = user.get_by_key(args['key'])
+		if not u:
+			print(f'created')
+			handle = user.create(args['key'])
+			u = user.get_by_handle(handle)
+			socketio.emit('user_created', u)
+		print(f'got u={u}')
+		access_token = create_access_token(identity=u['handle'])
+		g.db_commit = True
+		return {
+			'access_token' : access_token,
+		}, 200
+api.add_resource(LoginResource, '/api/login')
+
+user_fields = {
+	'handle' : fields.String,
+	'key' : fields.String,
+	'created_at' : fields.DateTime(dt_format='iso8601'),
+}
+user_list_fields = {
+	'users' : fields.List(fields.Nested(user_fields)),
+}
+class UserManagerResource(Resource):
+	decorators = [ jwt_required() ]
+
+	@marshal_with(user_list_fields)
+	def get(self):
+		l = user.list()
+		return { 'users' : l }, 200
+api.add_resource(UserManagerResource, '/api/user')
+
 
 media_fields = {
 	'handle' : fields.String,
@@ -95,6 +141,7 @@ tagging_fields = {
 	'handle' : fields.String,
 	'media_handle' : fields.String,
 	'tag_handle' : fields.String,
+	'user_handle' : fields.String,
 	'comment' : fields.String,
 	'position' : fields.Raw,
 	'created_at' : fields.DateTime(dt_format='iso8601'),
@@ -108,16 +155,26 @@ tagging_parser.add_argument('tag_handle', type=str, required=True)
 tagging_parser.add_argument('position', type=str, required=True)
 tagging_parser.add_argument('comment', type=str, required=False)
 class TaggingManagerResource(Resource):
+	decorators = [ jwt_required() ]
+
 	@marshal_with(tagging_list_fields)
 	def get(self):
 		l = tagging.list()
+		print(f'list={l}')
 		return { 'taggings' : l }, 200
 	@marshal_with(tagging_fields)
 	def post(self):
 		args = tagging_parser.parse_args()
+		user_handle = get_jwt_identity()
+		print(f'TAGGING CREATE THIS USER IS {user_handle}')
+		print(f'TAGGING CREATE THIS USER IS {user_handle}')
+		print(f'TAGGING CREATE THIS USER IS {user_handle}')
+		print(f'TAGGING CREATE THIS USER IS {user_handle}')
 		print(args)
-		handle = tagging.create(args['media_handle'], args['tag_handle'], args['position'], args['comment'])
+		handle = tagging.create(args['media_handle'], args['tag_handle'], user_handle, args['position'], args['comment'])
 		ti = tagging.get(handle)
+		print(f'TAGGING CREATE THIS TAGGIN IS {ti}')
+
 		socketio.emit('tagging_created', ti)
 		g.db_commit = True
 		return ti, 200
@@ -133,18 +190,22 @@ api.add_resource(TaggingResource, '/api/tagging/<handle>')
 search_fields = {
 	'media' : fields.List(fields.Nested(media_fields)),
 	'tags' : fields.List(fields.Nested(tag_fields)),
+	'users' : fields.List(fields.Nested(user_fields)),
 	'taggings' : fields.List(fields.Nested(tagging_fields)),
 }
 search_parser = reqparse.RequestParser()
 search_parser.add_argument('media_type', type=str, required=False, action='append')
 search_parser.add_argument('tag_handle', type=str, required=False, action='append')
+search_parser.add_argument('user_handle', type=str, required=False, action='append')
 class SearchResource(Resource):
-	@marshal_with(search_fields)
+	decorators = [ jwt_required() ]
+
+	#@marshal_with(search_fields)
 	def get(self):
 		args = search_parser.parse_args()
 		print("search args=")
 		print(args)
-		return logic.search(media_types=args['media_type'], tag_handles=args['tag_handle']), 200
+		return logic.search(media_types=args['media_type'], tag_handles=args['tag_handle'], user_handles=args['user_handle']), 200
 api.add_resource(SearchResource, '/api/search')
 @app.route('/', methods=[ 'GET' ])
 def push_index():
