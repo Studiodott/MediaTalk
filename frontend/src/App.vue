@@ -1,5 +1,7 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
+  <NavBar
+    v-if="store.logged_in"/>
   <section
     class="login-screen section"
     v-if="store.logged_in == false">
@@ -80,6 +82,7 @@ import Test from "./components/Test.vue";
 import MediaTag from "./components/MediaTag.vue";
 import MediaDisplay from "./components/MediaDisplay.vue";
 import FilterChooser from '@/components/FilterChooser.vue';
+import NavBar from '@/components/NavBar.vue';
 export default {
   name : 'App',
   components : {
@@ -87,6 +90,7 @@ export default {
     MediaTag,
     MediaDisplay,
     FilterChooser,
+    NavBar,
   },
   data : function() {
     return {

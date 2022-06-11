@@ -30,7 +30,7 @@ export const Store = defineStore('Store', {
 			})
 			.then(resp => resp.json())
 			.then(auth => {
-				this.set_access_token(auth.access_token);
+				this.log_in(auth.access_token, email);
 				this.load();
 			})
 			.catch((error) => {
@@ -38,14 +38,20 @@ export const Store = defineStore('Store', {
 			});
 		},
 
-		set_access_token(v) {
-			if (v != undefined) {
-				this.logged_in = true;
-				localStorage.access_token = v;
-			} else {
-				this.logged_in = false;
-				localStorage.removeItem('access_token');
-			}
+		log_in(v, key) {
+			this.logged_in = true;
+			localStorage.access_token = v;
+			localStorage.access_key = key;
+		},
+
+		log_out() {
+			this.logged_in = false;
+			localStorage.removeItem('access_token');
+			localStorage.removeItem('access_key');
+		},
+
+		get_login_key() {
+			return this.logged_in ? localStorage.access_key : undefined;
 		},
 
 		async load() {
@@ -63,7 +69,7 @@ export const Store = defineStore('Store', {
 				data.media.forEach((e) => { this.live.media.push(e); });
 			})
 			.catch((error) => {
-				this.set_access_token(undefined);
+				this.log_out();
 			});
 
 			window.fetch(api_target + '/api/tag', std_opts)
@@ -73,7 +79,7 @@ export const Store = defineStore('Store', {
 				data.tags.forEach((e) => { this.live.tags.push(e); });
 			})
 			.catch((error) => {
-				this.set_access_token(undefined);
+				this.log_out();
 			});
 
 			window.fetch(api_target + '/api/user', std_opts)
@@ -83,7 +89,7 @@ export const Store = defineStore('Store', {
 				data.users.forEach((e) => { this.live.users.push(e); });
 			})
 			.catch((error) => {
-				this.set_access_token(undefined);
+				this.log_out();
 			});
 
 			window.fetch(api_target + '/api/tagging', std_opts)
@@ -93,7 +99,7 @@ export const Store = defineStore('Store', {
 				data.taggings.forEach((e) => { this.live.taggings.push(e); });
 			})
 			.catch((error) => {
-				this.set_access_token(undefined);
+				this.log_out();
 			});
 
 		},
@@ -126,7 +132,7 @@ export const Store = defineStore('Store', {
 			})
 			.catch((error) => {
 				console.log(`error performing search: ${error}`);
-				this.set_access_token(undefined);
+				this.log_out();
 			});
 		},
 		add_media(media) {
@@ -168,7 +174,7 @@ export const Store = defineStore('Store', {
 			.then(resp => resp.json())
 			.catch((error) => {
 				console.log("error while creating tag: " + error);
-				this.set_access_token(undefined);
+				this.log_out();
 			});
 			return t;
 		},
@@ -188,7 +194,7 @@ export const Store = defineStore('Store', {
 			}).then(resp => resp.json())
 			.catch((error) => {
 				console.log("error while creating tagging: " + error);
-				this.set_access_token(undefined);
+				this.log_out();
 			});
 
 			return t;
