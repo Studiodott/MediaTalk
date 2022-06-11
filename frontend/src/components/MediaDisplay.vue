@@ -41,21 +41,10 @@
     </div>
     <div
       class="column is-one-third">
-      <p>Existing tags:</p>
-      <ul>
-        <li
-          v-for="(tagging_positions, tag_name) in getTagsForMedia">
-          <a
-            @click="highlight_taggings(tagging_positions)">
-            {{ tag_name }}
-          </a>
-          <ul>
-            <li v-for="p in tagging_positions">
-              <a @click="highlight_taggings([ p ])">here</a>
-            </li>
-          </ul>
-        </li>
-      </ul>
+      <TagList
+        :media_handle="handle"
+        @select="highlight_taggings"
+        collection="search"/>
     </div>
   </div>
 </template>
@@ -63,6 +52,7 @@
 <script>
 import { nextTick } from 'vue';
 import { Store } from '@/store/store.js';
+import TagList from '@/components/TagList.vue';
 import TagChooserStatic from '@/components/TagChooserStatic.vue';
 import TagChooserTimeline from '@/components/TagChooserTimeline.vue';
 import MediaDisplayText from '@/components/MediaDisplayText.vue';
@@ -81,6 +71,7 @@ export default {
     };
   },
   components : {
+    TagList,
     TagChooserStatic,
     TagChooserTimeline,
     MediaDisplayText,
@@ -116,6 +107,7 @@ export default {
     },
     // we ourselves want a tagging list highlighted, propagate to media
     highlight_taggings : function(l) {
+      console.log(`highlighted ${l.length} taggings`);
       this.highlights_for_media = l;
     },
   },
@@ -130,7 +122,7 @@ export default {
           if (!(tag.name in as_dict)) {
             as_dict[tag.name] = [];
           }
-          as_dict[tag.name].push(JSON.parse(ti.position));
+          as_dict[tag.name].push(ti.position);
         }
       });
       return as_dict;

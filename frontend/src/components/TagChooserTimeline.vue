@@ -221,7 +221,7 @@ export default {
       this.emit_selected();
     },
     getFilteredTags(search) {
-      this.filteredTags = this.store.tags.filter(tag => {
+      this.filteredTags = this.store.live.tags.filter(tag => {
         return (
           tag.name.toString().toLowerCase().indexOf(search.toLowerCase()) >= 0
         );

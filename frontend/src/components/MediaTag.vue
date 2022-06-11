@@ -50,27 +50,18 @@
         v-if="media_type == 'TEXT' || media_type == 'IMAGE'"
         :selection="selection_for_tagchooser"
         :media_handle="handle"/>
-      <p>Existing tags:</p>
-      <ul>
-        <li
-          v-for="(tagging_list, tag_name) in getTagsForMedia">
-          <a
-            @click="highlight_taggings(tagging_list.map((e) => e.position))">
-            {{ tag_name }}
-          </a>
-          <ul>
-            <li v-for="meta in tagging_list">
-              <a @click="highlight_taggings([ meta.position  ])">here</a> by {{ meta.user.key }}
-            </li>
-          </ul>
-        </li>
-      </ul>
+      <hr/>
+      <TagList
+        :media_handle="handle"
+        @select="highlight_taggings"
+        collection="live"/>
     </div>
   </div>
 </template>
 
 <script>
 import { Store } from '@/store/store.js';
+import TagList from '@/components/TagList.vue';
 import TagChooserStatic from '@/components/TagChooserStatic.vue';
 import TagChooserTimeline from '@/components/TagChooserTimeline.vue';
 import MediaTagText from '@/components/MediaTagText.vue';
@@ -89,6 +80,7 @@ export default {
     };
   },
   components : {
+    TagList,
     TagChooserStatic,
     TagChooserTimeline,
     MediaTagText,
@@ -139,7 +131,7 @@ export default {
             as_dict[tag.name] = [];
           }
           as_dict[tag.name].push({
-            position : JSON.parse(ti.position),
+            position : ti.position,
             tagging : ti,
             user : this.store.live.users.find((u) => u.handle == ti.user_handle),
           });

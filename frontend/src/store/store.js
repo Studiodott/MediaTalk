@@ -96,7 +96,10 @@ export const Store = defineStore('Store', {
 			.then(resp => resp.json())
 			.then(data => {
 				this.live.taggings.splice(0);
-				data.taggings.forEach((e) => { this.live.taggings.push(e); });
+				data.taggings.forEach((e) => {
+					e.position = JSON.parse(e.position);
+					this.live.taggings.push(e);
+				});
 			})
 			.catch((error) => {
 				this.log_out();
@@ -128,7 +131,10 @@ export const Store = defineStore('Store', {
 				this.search_results.users.splice(0);
 				data.users.forEach((e) => { this.search_results.users.push(e); });
 				this.search_results.taggings.splice(0);
-				data.taggings.forEach((e) => { this.search_results.taggings.push(e); });
+				data.taggings.forEach((e) => {
+					e.position = JSON.parse(e.position);
+					this.search_results.taggings.push(e);
+				});
 			})
 			.catch((error) => {
 				console.log(`error performing search: ${error}`);
@@ -154,6 +160,7 @@ export const Store = defineStore('Store', {
 			this.live.tags.splice(0, 0, tag);
 		},
 		add_tagging(tagging) {
+			tagging.position = JSON.parse(tagging.position);
 			this.live.taggings = this.live.taggings.filter((e_tagging) => {
 				return tagging.handle != e_tagging.handle;
 			});
@@ -220,12 +227,10 @@ export const Store = defineStore('Store', {
 		},
 
 		get_tag(handle) {
-			console.log("handle="+handle);
 			for (let i = 0; i < this.live.tags.length; i++) {
 				if (handle == this.live.tags[i].handle)
 					return this.live.tags[i];
 			}
-			console.log("null!");
 			return null;
 		},
 	},
