@@ -37,11 +37,14 @@
               @click="select_taggings([ tagging ])"
               class="tag tagging"
               :style="'background: '+ tagging.colour + ';'">
-              {{ 'icon' }}
+              {{ 'icon' }} {{ (tagging.comment && tagging.comment.length) ? '*' : '' }}
             </span>
             <template v-slot:content>
-              by {{ tagging.user_handle }}
-              at {{ tagging.created_at }}
+              {{ get_time_ago(tagging.created_at) }} by {{ get_user_key(tagging.user_handle) }}
+              <b
+                v-if="tagging.comment && tagging.comment.length">
+                comment "{{ tagging.comment }}"
+              </b>
             </template>
           </o-tooltip>
         </div>
@@ -53,6 +56,7 @@
 
 <script>
 import { Store } from '@/store/store.js';
+import * as timeago from 'timeago.js';
 
 export default {
   name : 'TagList',
@@ -89,6 +93,17 @@ export default {
         return 'not found';
       }
       return tag.name;
+    },
+    get_user_key : function(user_handle) {
+      let user = this.store.get_user(user_handle);
+      if (!user) {
+        console.log(`oddity, can't find user keyfor handle=${user_handle}`);
+        return 'not found';
+      }
+      return user.key;
+    },
+    get_time_ago : function(ts) {
+      return timeago.format(ts);
     },
   },
   computed : {

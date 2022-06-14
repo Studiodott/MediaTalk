@@ -239,5 +239,13 @@ export const Store = defineStore('Store', {
 			}
 			return null;
 		},
+
+		get_user(handle) {
+			for (let i = 0; i < this.live.users.length; i++) {
+				if (handle == this.live.users[i].handle)
+					return this.live.users[i];
+			}
+			return null;
+		},
 	},
 });

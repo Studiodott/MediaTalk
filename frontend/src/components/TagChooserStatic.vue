@@ -192,7 +192,7 @@ export default {
       // tag them all on this media at this position
       await Promise.all(tag_handles.map(async (tag_handle) => {
         let tagging = this.store.create_tagging(this.media_handle,
-          tag_handle, position);
+          tag_handle, position, this.comment);
         console.log(tagging);
       }));
 
