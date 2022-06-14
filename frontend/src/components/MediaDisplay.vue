@@ -7,6 +7,7 @@
       <div
         v-if="media_type == 'VIDEO'">
         <MediaDisplayVideo
+          :selection_colour="store.get_my_colour()"
           @advanced="advanced_by_media"
           :highlights="highlights_for_media"
           :selection="selection_for_media"
@@ -27,6 +28,7 @@
       <div
         v-else-if="media_type == 'IMAGE'">
         <MediaDisplayImage
+          :selection_colour="store.get_my_colour()"
           :highlights="highlights_for_media"
           @selected="selected_by_media"
           v-bind:src="url_original"/>
@@ -34,6 +36,7 @@
       <div
         v-else-if="media_type == 'TEXT'">
         <MediaDisplayText
+          :selection_colour="store.get_my_colour()"
           :highlights="highlights_for_media"
           @selected="selected_by_media"
           v-bind:src="url_original"/>
@@ -122,7 +125,14 @@ export default {
           if (!(tag.name in as_dict)) {
             as_dict[tag.name] = [];
           }
-          as_dict[tag.name].push(ti.position);
+          as_dict[tag.name].push({
+            position : ti.position,
+            tagging : ti,
+            user : this.store.live.users.find((u) => u.handle == ti.user_handle),
+          });
+          if (!as_dict[tag.name][as_dict[tag.name].length-1].user) {
+            console.log('BLOW UP');
+          }
         }
       });
       return as_dict;

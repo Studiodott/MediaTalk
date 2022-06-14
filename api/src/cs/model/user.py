@@ -5,6 +5,15 @@ from ulid import ULID
 from pprint import pprint as D
 from cs import app
 from cs.model.setup import key
+from random import randint
+
+def gen_colour():
+
+	floor = 0x7f
+
+	return '#{}'.format(
+		''.join([ '{:02x}'.format(floor + randint(0, 0xff-floor)) for x in range(3) ])
+	)
 
 def list():
 	q = """
@@ -12,6 +21,7 @@ def list():
 			id,
 			handle,
 			key,
+			colour,
 			created_at
 		FROM
 			"user";
@@ -26,6 +36,7 @@ def get_by_handle(handle):
 			id,
 			handle,
 			key,
+			colour,
 			created_at
 		FROM
 			"user"
@@ -49,6 +60,7 @@ def get_by_key(key):
 			id,
 			handle,
 			key,
+			colour,
 			created_at
 		FROM
 			"user"
@@ -69,16 +81,19 @@ def create(desired_key):
 		INSERT INTO "user" (
 			"handle",
 			"key",
+			"colour",
 			"created_at"
 		) VALUES (
 			%(handle)s,
 			%(key)s,
+			%(colour)s,
 			NOW()
 		);"""
 	
 	g.db_cur.execute(q, {
 		'handle' : handle,
 		'key' : desired_key,
+		'colour' : gen_colour(),
 	})
 
 	return handle

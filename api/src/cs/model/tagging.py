@@ -14,6 +14,7 @@ def list():
 			m.handle as media_handle,
 			t.handle as tag_handle,
 			u.handle as user_handle,
+			u.colour as colour,
 			ti.position as position,
 			ti.comment as comment,
 			ti.created_at as created_at
@@ -35,6 +36,7 @@ def get(handle):
 			m.handle as media_handle,
 			t.handle as tag_handle,
 			u.handle as user_handle,
+			u.colour as colour,
 			ti.position as position,
 			ti.comment as comment,
 			ti.created_at as created_at
@@ -82,7 +84,6 @@ def create(media_handle, tag_handle, user_handle, position, comment=''):
 		'position' : position,
 		'comment' : comment,
 	}
-	print(f'a={a}')
 	g.db_cur.execute(q, a)
 
 	return handle

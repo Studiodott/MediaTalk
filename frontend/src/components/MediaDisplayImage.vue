@@ -5,7 +5,7 @@
     id="image_container">
     <img
       :src="src"
-      class="actual_image"
+      id="actual_image"
       @load="image_loaded"
       ref="actual_image"/>
     <canvas
@@ -18,10 +18,6 @@
 import { nextTick } from 'vue';
 
 const MIN_DRAGGING_TIME = 500;
-const FILL_STYLE = 'rgba(255, 165, 0, 0.3)';
-const STROKE_STYLE = 'rgb(255, 165, 0)';
-const FILL_STYLE_HIGHLIGHT = 'rgba(165, 255, 0, 0.3)';
-const STROKE_STYLE_HIGHLIGHT = 'rgb(165,255, 0)';
 
 export default {
   name : 'MediaDisplayImage',
@@ -36,6 +32,7 @@ export default {
   },
   props : [
     'src',
+    'selection_colour',
     'highlights',
   ],
   emits : [
@@ -51,24 +48,27 @@ export default {
         let highlights = [];
 
         new_highlights.forEach((h) => {
-          switch (h.what) {
+          let p = h.position;
+          switch (p.what) {
             case 'all':
                 break;
             case 'point' : 
                 highlights.push({
                   'what' : 'point',
-                  'at' : this.delogicalize_coords(h.at.x, h.at.y),
+                  'at' : this.delogicalize_coords(p.at.x, p.at.y),
+                  'colour' : h.colour,
                 });
                 break;
             case 'range' : 
                 highlights.push({
                   'what' : 'range',
-                  'from' : this.delogicalize_coords(h.from.x, h.from.y),
-                  'to' : this.delogicalize_coords(h.to.x, h.to.y),
+                  'from' : this.delogicalize_coords(p.from.x, p.from.y),
+                  'to' : this.delogicalize_coords(p.to.x, p.to.y),
+                  'colour' : h.colour,
                 });
                 break;
             default:
-                console.log(`error: unknown type of highlight "${h.what}"`);
+                console.log(`error: unknown type of highlight "${p.what}"`);
           }
         });
         this.display.highlights = highlights;
@@ -235,6 +235,8 @@ export default {
 
       function draw(something) {
         // draw a point or a range
+        ctx.fillStyle = something.colour + '7f';
+        ctx.strokeStyle = something.colour + 'ff';
         if (something.what == 'point') {
           ctx.beginPath();
           ctx.arc(something.at.x, something.at.y, 8, 0, 2*Math.PI);
@@ -254,8 +256,6 @@ export default {
       let highlights = this.display.highlights;
       if (highlights) {
         // relevant style
-        ctx.fillStyle = FILL_STYLE_HIGHLIGHT;
-        ctx.strokeStyle = STROKE_STYLE_HIGHLIGHT;
         ctx.lineWidth = 2;
 
         for (let i = 0; i < highlights.length; i++) {
@@ -269,8 +269,8 @@ export default {
       let selection = this.display.selection;
       if (selection) {
         // relevant style
-        ctx.fillStyle = FILL_STYLE;
-        ctx.strokeStyle = STROKE_STYLE;
+        ctx.fillStyle = this.selection_colour + '7f';
+        ctx.strokeStyle = this.selection_colour + 'ff';
         ctx.lineWidth = 2;
 
         // draw a point or a range
@@ -286,7 +286,7 @@ export default {
 #image_container {
   position: relative;
 }
-.actual_image {
+#actual_image {
   width: 100%;
   position: absolute;
 }

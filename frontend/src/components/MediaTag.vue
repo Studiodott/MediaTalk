@@ -7,6 +7,7 @@
       <div
         v-if="media_type == 'VIDEO'">
         <MediaTagVideo
+          :selection_colour="store.get_my_colour()"
           @advanced="advanced_by_media"
           :highlights="highlights_for_media"
           :selection="selection_for_media"
@@ -27,6 +28,7 @@
       <div
         v-else-if="media_type == 'IMAGE'">
         <MediaTagImage
+          :selection_colour="store.get_my_colour()"
           :highlights="highlights_for_media"
           @selected="selected_by_media"
           v-bind:src="url_original"/>
@@ -34,6 +36,7 @@
       <div
         v-else-if="media_type == 'TEXT'">
         <MediaTagText
+          :selection_colour="store.get_my_colour()"
           :highlights="highlights_for_media"
           @selected="selected_by_media"
           v-bind:src="url_original"/>

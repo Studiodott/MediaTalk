@@ -40,7 +40,8 @@
             class="buttons">
             <a
               @click="log_out"
-              class="button is-light">
+              class="button is-light"
+              :style="'background: ' + store.get_my_colour() + ';'">
               Log out {{ store.get_login_key() }}
             </a>
           </div>

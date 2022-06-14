@@ -8,6 +8,7 @@ create table "user" (
 	id serial not null,
 	handle character varying(26) not null,
 	key character varying(64) not null,
+	colour character varying(64) not null,
 	created_at timestamp not null,
 	primary key (id)
 );

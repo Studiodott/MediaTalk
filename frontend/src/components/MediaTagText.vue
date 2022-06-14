@@ -30,6 +30,7 @@ export default {
   props : [
     'src',
     'highlights',
+    'selection_colour',
   ],
   emits : [
     'selected',
@@ -131,16 +132,20 @@ export default {
       // assumes there is an existing region in which the mark will fall
       function splice_regions_around(regions, mark) {
 
+        console.dir(regions);
+        console.log(`looking for mark=${mark}`);
         // first find the region in which the mark occurs
         let found = undefined;
 
         for (let i = 0; i < regions.length; i++) {
           let r = regions[i];
 
+          console.log(`considering r.offset=${r.offset} r.length=${r.length}`);
           if ((r.offset <= mark) && (mark < (r.offset + r.length))) {
             found = i;
           }
         }
+        console.log(`found=${found}`);
         if (mark == regions[found].offset) {
           // no need for a new region, just return this one
           return found;
@@ -172,31 +177,37 @@ export default {
       }
 
 
+      console.log("highlights");
       if (this.highlights && this.highlights.length) {
         // a localized copy of highlights which is from-ascending
         let highlights = [...this.highlights];
         highlights.sort((l, r) => {
-          let l_val = (l.what == 'point') ? l.at : l.from;
-          let r_val = (r.what == 'point') ? r.at : r.from;
+          let l_val = (l.position.what == 'point') ? l.position.at : l.position.from;
+          let r_val = (r.position.what == 'point') ? r.position.at : r.position.from;
           return r_val - l_val;
         });
 
         for (let i = 0; i < highlights.length; i++) {
-          splice_range(this.regions, highlights[i], 'highlight');
+          console.dir(highlights[i]);
+          if (![ 'point', 'range' ].includes(highlights[i].position.what))
+            continue;
+          splice_range(this.regions, highlights[i].position, { colour : highlights[i].colour });
         }
       }
 
+      console.log("selection");
       console.dir(this.selection);
       if (this.selection && this.selection.what == 'range') {
-        splice_range(this.regions, this.selection, 'selection');
+        splice_range(this.regions, this.selection, { colour : this.selection_colour });
       }
 
+      console.log("regions");
       console.dir(this.regions);
       for (let i = 0; i < this.regions.length; i++) {
         let r = this.regions[i];
         r.span = buildSpan(r.offset, r.length, this.original_text);
         r.span.dataset.offset = r.offset;
-        r.which.forEach((c) => { r.span.classList.add(c); });
+        r.which.forEach((m) => { r.span.style = `background: ${m.colour};`; });
         this.$refs.actual_text.appendChild(r.span);
       }
 

@@ -44,6 +44,7 @@ from cs.background import tasks
 
 login_fields = {
 	'access_token' : fields.String,
+	'colour' : fields.String,
 }
 login_parser = reqparse.RequestParser()
 login_parser.add_argument('key', type=str, required=True)
@@ -62,6 +63,7 @@ class LoginResource(Resource):
 		g.db_commit = True
 		return {
 			'access_token' : access_token,
+			'colour' : u['colour'],
 		}, 200
 api.add_resource(LoginResource, '/api/login')
 
@@ -143,6 +145,7 @@ tagging_fields = {
 	'tag_handle' : fields.String,
 	'user_handle' : fields.String,
 	'comment' : fields.String,
+	'colour' : fields.String,
 	'position' : fields.Raw,
 	'created_at' : fields.DateTime(dt_format='iso8601'),
 }

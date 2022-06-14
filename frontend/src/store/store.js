@@ -30,7 +30,7 @@ export const Store = defineStore('Store', {
 			})
 			.then(resp => resp.json())
 			.then(auth => {
-				this.log_in(auth.access_token, email);
+				this.log_in(auth.access_token, email, auth.colour);
 				this.load();
 			})
 			.catch((error) => {
@@ -38,20 +38,26 @@ export const Store = defineStore('Store', {
 			});
 		},
 
-		log_in(v, key) {
+		log_in(v, key, colour) {
 			this.logged_in = true;
 			localStorage.access_token = v;
 			localStorage.access_key = key;
+			localStorage.access_my_colour = colour;
 		},
 
 		log_out() {
 			this.logged_in = false;
 			localStorage.removeItem('access_token');
 			localStorage.removeItem('access_key');
+			localStorage.removeItem('access_my_colour');
 		},
 
 		get_login_key() {
 			return this.logged_in ? localStorage.access_key : undefined;
+		},
+
+		get_my_colour() {
+			return this.logged_in ? localStorage.access_my_colour : undefined;
 		},
 
 		async load() {

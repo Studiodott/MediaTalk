@@ -17,7 +17,7 @@
           :aria-expanded="collapse_open_on">
           <p
               class="card-header-title">
-            {{ store.get_tag(tag_handle).name }}
+            {{ get_tag_name(tag_handle) }}
           </p>
           <a
             class="card-header-icon">
@@ -35,7 +35,8 @@
             multiline>
             <span
               @click="select_taggings([ tagging ])"
-              class="tag tagging">
+              class="tag tagging"
+              :style="'background: '+ tagging.colour + ';'">
               {{ 'icon' }}
             </span>
             <template v-slot:content>
@@ -79,7 +80,15 @@ export default {
   methods : {
     select_taggings : function(taggings) {
       console.log(`selected ${taggings.length} taggings`);
-      this.$emit('select', taggings.map(ti => ti.position));
+      this.$emit('select', taggings); //.map(ti => ti.position));
+    },
+    get_tag_name : function(tag_handle) {
+      let tag = this.store.get_tag(tag_handle);
+      if (!tag) {
+        console.log(`oddity, can't find tag for handle=${tag_handle}`);
+        return 'not found';
+      }
+      return tag.name;
     },
   },
   computed : {

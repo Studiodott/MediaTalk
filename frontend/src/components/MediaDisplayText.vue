@@ -30,6 +30,7 @@ export default {
   props : [
     'src',
     'highlights',
+    'selection_colour',
   ],
   emits : [
     'selected',
@@ -176,19 +177,19 @@ export default {
         // a localized copy of highlights which is from-ascending
         let highlights = [...this.highlights];
         highlights.sort((l, r) => {
-          let l_val = (l.what == 'point') ? l.at : l.from;
-          let r_val = (r.what == 'point') ? r.at : r.from;
+          let l_val = (l.position.what == 'point') ? l.position.at : l.position.from;
+          let r_val = (r.position.what == 'point') ? r.position.at : r.position.from;
           return r_val - l_val;
         });
 
         for (let i = 0; i < highlights.length; i++) {
-          splice_range(this.regions, highlights[i], 'highlight');
+          splice_range(this.regions, highlights[i].position, { colour : highlights[i].colour });
         }
       }
 
       console.dir(this.selection);
       if (this.selection && this.selection.what == 'range') {
-        splice_range(this.regions, this.selection, 'selection');
+        splice_range(this.regions, this.selection, { colour : this.selection_colour });
       }
 
       console.dir(this.regions);
@@ -196,7 +197,7 @@ export default {
         let r = this.regions[i];
         r.span = buildSpan(r.offset, r.length, this.original_text);
         r.span.dataset.offset = r.offset;
-        r.which.forEach((c) => { r.span.classList.add(c); });
+        r.which.forEach((m) => { r.span.style = `background: ${m.colour};`; });
         this.$refs.actual_text.appendChild(r.span);
       }
 

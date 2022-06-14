@@ -53,6 +53,7 @@ export default {
     'waveform',
     'selection',
     'highlights',
+    'selection_colour',
   ],
   emits : [
     'selected',
@@ -69,31 +70,34 @@ export default {
 
         // build up a new list & install it
         new_highlights.forEach((h) => {
-          switch (h.what) {
+          let p = h.position;
+          switch (p.what) {
             case 'all':
                 break;
             case 'point' : 
                 highlights.push({
                   'what' : 'point',
-                  'at' : this.delogicalize_timestamp(h.at),
+                  'at' : this.delogicalize_timestamp(p.at),
+                  'colour' : h.colour,
                 });
                 break;
             case 'range' : 
                 highlights.push({
                   'what' : 'range',
-                  'from' : this.delogicalize_timestamp(h.from),
-                  'to' : this.delogicalize_timestamp(h.to),
+                  'from' : this.delogicalize_timestamp(p.from),
+                  'to' : this.delogicalize_timestamp(p.to),
+                  'colour' : h.colour,
                 });
                 break;
             default:
-                console.log(`error: unknown type of highlight "${h.what}"`);
+                console.log(`error: unknown type of highlight "${p.what}"`);
           }
         });
         this.display.highlights = highlights;
 
         // if there is a first, jump towards it
         if (new_highlights && new_highlights.length) {
-          let first = new_highlights[0];
+          let first = new_highlights[0].position;
           switch (first.what) {
             case 'all':
                 break;
@@ -130,6 +134,7 @@ export default {
               this.display.selection = {
                 what : 'point',
                 at : this.delogicalize_timestamp(new_selection.at),
+                colour : this.selection_colour,
               };
               break;
           case 'range':
@@ -137,6 +142,7 @@ export default {
                 what : 'range',
                 from : new_selection.from ? this.delogicalize_timestamp(new_selection.from) : null,
                 to : new_selection.to ? this.delogicalize_timestamp(new_selection.to) : null,
+                colour : this.selection_colour,
               };
               break;
           default:
@@ -237,6 +243,8 @@ export default {
       ctx.clearRect(0, 0, w, h);
 
       function draw(something) {
+        ctx.fillStyle = something.colour + '7f';
+        ctx.strokeStyle = something.colour + 'ff';
         if (something.what == 'point') {
           let pos = something.at;
           ctx.beginPath();
@@ -254,8 +262,6 @@ export default {
       // the highlights
       let highlights = this.display.highlights;
       if (highlights) {
-        ctx.strokeStyle = STROKE_STYLE_HIGHLIGHT;
-        ctx.fillStyle = FILL_STYLE_HIGHLIGHT;
         ctx.lineWidth = 2;
 
         for (let i = 0; i < highlights.length; i++) {
@@ -268,8 +274,6 @@ export default {
       let selection = this.display.selection;
       if (selection) {
         // relevant style
-        ctx.fillStyle = FILL_STYLE_SELECTION;
-        ctx.strokeStyle = STROKE_STYLE_SELECTION;
         ctx.lineWidth = 2;
 
         // draw a point or a range
@@ -280,17 +284,17 @@ export default {
             what : 'range',
             from : selection.from,
             to : selection.to || pos,
+            colour : selection.colour,
           });
         }
       }
 
       // the current position
-      ctx.strokeStyle = STROKE_STYLE;
-      ctx.fillStyle = FILL_STYLE;
       ctx.lineWidth = 2;
 
       draw({
         what : 'point',
+        colour : this.selection_colour,
         at : pos,
       });
     },

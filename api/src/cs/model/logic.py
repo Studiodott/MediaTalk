@@ -47,6 +47,7 @@ def search(media_types, tag_handles, user_handles):
 			t.created_at as tag_created_at,
 			u.handle as user_handle,
 			u.key as user_key,
+			u.colour as user_colour,
 			u.created_at as user_created_at
 		FROM
 			media m
@@ -105,6 +106,7 @@ def search(media_types, tag_handles, user_handles):
 			'tag_handle' : row['tag_handle'],
 			'handle' : row['tagging_handle'],
 			'position' : row['tagging_position'],
+			'colour' : row['user_colour'],
 			'comment' : row['tagging_comment'],
 			'created_at' : row['tagging_created_at'],
 		})
