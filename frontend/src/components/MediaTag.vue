@@ -16,14 +16,13 @@
       </div>
       <div
         v-else-if="media_type == 'AUDIO'">
-        <audio
-          controls
-          v-bind:src="url_original">
-          No browser support for video :-(
-        </audio>
-        <img
-          v-if="url_description.length > 0"
-          v-bind:src="url_description">
+        <MediaTagAudio
+          :selection_colour="store.get_my_colour()"
+          @advanced="advanced_by_media"
+          :highlights="highlights_for_media"
+          :selection="selection_for_media"
+          :src="url_original"
+          :waveform="url_description"/>
       </div>
       <div
         v-else-if="media_type == 'IMAGE'">
@@ -69,6 +68,7 @@ import TagChooserStatic from '@/components/TagChooserStatic.vue';
 import TagChooserTimeline from '@/components/TagChooserTimeline.vue';
 import MediaTagText from '@/components/MediaTagText.vue';
 import MediaTagVideo from '@/components/MediaTagVideo.vue';
+import MediaTagAudio from '@/components/MediaTagAudio.vue';
 import MediaTagImage from '@/components/MediaTagImage.vue';
 import PositionDisplay from '@/components/PositionDisplay.vue';
 
@@ -88,6 +88,7 @@ export default {
     TagChooserTimeline,
     MediaTagText,
     MediaTagVideo,
+    MediaTagAudio,
     MediaTagImage,
     PositionDisplay,
   },
