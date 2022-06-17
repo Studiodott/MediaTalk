@@ -1,15 +1,14 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
-  <div>
+  <div
+    class="is-flex is-flex-direction-column is-flex-align-items-stretch">
     <video
       id="actual_video"
-      ref="actual_video"
-      controls>
+      ref="actual_video">
       <source
         v-bind:src="src">
       No browser support for video :-(
     </video>
-    {{ duration }}
     <div
       id="timing_container">
       <img
@@ -29,15 +28,9 @@
 import { nextTick } from 'vue';
 
 const FPS = 25;
-const FILL_STYLE_SELECTION = 'rgba(255, 165, 0, 0.3)';
-const STROKE_STYLE_SELECTION = 'rgb(255, 165, 0)';
-const FILL_STYLE_HIGHLIGHT = 'rgba(165, 255, 0, 0.3)';
-const STROKE_STYLE_HIGHLIGHT = 'rgb(165, 255, 0)';
-const FILL_STYLE = 'rgba(165, 255, 166, 0.3)';
-const STROKE_STYLE = 'rgb(165, 255, 166)';
 
 export default {
-  name : 'MediaDisplayVideo',
+  name : 'MediaTagVideo',
   data : function() {
     return {
       duration : undefined,
@@ -97,7 +90,7 @@ export default {
 
         // if there is a first, jump towards it
         if (new_highlights && new_highlights.length) {
-          let first = new_highlights[0];
+          let first = new_highlights[0].position;
           switch (first.what) {
             case 'all':
                 break;
@@ -165,6 +158,19 @@ export default {
     this.$refs.actual_video.addEventListener('pause', (e) => {
       this.stopped_playing();
     });
+    this.$refs.actual_video.addEventListener('ended', (e) => {
+      this.stopped_playing();
+    });
+    this.$refs.actual_video.addEventListener('error', (e) => {
+      this.stopped_playing();
+    });
+    this.$refs.actual_video.addEventListener('click', (e) => {
+      if (event.target.paused) {
+        event.target.play();
+      } else {
+        event.target.pause();
+      }
+    });
     // timeline clicks update the video position
     this.$refs.timing_timeline.addEventListener('click', (e) => {
       let when = this.timeline_resolve_click(event.clientX, event.clientY);
@@ -197,6 +203,9 @@ export default {
     // when we start playing, we start an interval timer to update the
     // position at FPS
     started_playing : function() {
+      // clear any running context
+      if (this.playing_ctx)
+        clearInterval(this.playing_ctx);
       this.playing_ctx = setInterval(() => {
         this.update_position();
       }, 1000 / FPS);
@@ -204,6 +213,7 @@ export default {
     // and when we stop playing, we stop the interval timer
     stopped_playing : function() {
       clearInterval(this.playing_ctx);
+      this.playing_ctx = undefined;
     },
     // turn a click event's clientX/Y on the timeline into a timestamp
     timeline_resolve_click : function(mouse_x, mouse_y) {
