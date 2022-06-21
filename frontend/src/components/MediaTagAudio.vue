@@ -25,16 +25,16 @@
       <rect
         v-if="playing_ctx"
         style="fill: white"
-        x="24"
+        x="16"
         y="16"
-        width="16"
+        width="21"
         height="64"/>
       <rect
         v-if="playing_ctx"
         style="fill: white"
-        x="56"
+        x="58"
         y="16"
-        width="16"
+        width="21"
         height="64"/>
     </svg>
     </div>
@@ -146,6 +146,7 @@ export default {
       handler : function(new_selection) {
         if (!new_selection) {
           this.display.selection = null;
+          this.redraw();
           return;
         }
 
@@ -171,6 +172,8 @@ export default {
               console.log(`error: don't know how to handle selection of type "${new_selection.what}"`);
               break;
         }
+
+        this.redraw();
       },
       // but we want to see all changes here, might be some timestamp changed
       deep : true,

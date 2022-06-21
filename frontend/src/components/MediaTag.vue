@@ -42,16 +42,32 @@
       </div>
     </div>
     <div
-      class="column is-one-third">
-      <TagChooserTimeline
-        v-if="media_type == 'VIDEO' || media_type == 'AUDIO'"
-        :advance="advance_for_tagchooser"
-        @selected="selected_by_tagchooser"
-        :media_handle="handle"/>
-      <TagChooserStatic
-        v-if="media_type == 'TEXT' || media_type == 'IMAGE'"
-        :selection="selection_for_tagchooser"
-        :media_handle="handle"/>
+      class="column is-one-third is-flex is-flex-direction-column is-justify-content-end">
+      <div
+        v-if="media_type == 'VIDEO' || media_type == 'AUDIO'">
+        <div
+          class="box">
+          <p>new:</p>
+          <TagChooserTimelineSimple
+            :advance="advance_for_tagchooser"
+            @selected="selected_by_tagchooser"
+            :media_handle="handle"/>
+        </div>
+        <div
+          class="box">
+          <p>prev:</p>
+          <TagChooserTimeline
+            :advance="advance_for_tagchooser"
+            @selected="selected_by_tagchooser"
+            :media_handle="handle"/>
+        </div>
+      </div>
+      <div
+        v-if="media_type == 'TEXT' || media_type == 'IMAGE'">
+        <TagChooserStatic
+          :selection="selection_for_tagchooser"
+          :media_handle="handle"/>
+      </div>
       <hr/>
       <TagList
         :media_handle="handle"
@@ -66,6 +82,7 @@ import { Store } from '@/store/store.js';
 import TagList from '@/components/TagList.vue';
 import TagChooserStatic from '@/components/TagChooserStatic.vue';
 import TagChooserTimeline from '@/components/TagChooserTimeline.vue';
+import TagChooserTimelineSimple from '@/components/TagChooserTimelineSimple.vue';
 import MediaTagText from '@/components/MediaTagText.vue';
 import MediaTagVideo from '@/components/MediaTagVideo.vue';
 import MediaTagAudio from '@/components/MediaTagAudio.vue';
@@ -86,6 +103,7 @@ export default {
     TagList,
     TagChooserStatic,
     TagChooserTimeline,
+    TagChooserTimelineSimple,
     MediaTagText,
     MediaTagVideo,
     MediaTagAudio,

@@ -117,6 +117,7 @@ export default {
       handler : function(new_selection) {
         if (!new_selection) {
           this.display.selection = null;
+          this.redraw();
           return;
         }
 
@@ -142,6 +143,8 @@ export default {
               console.log(`error: don't know how to handle selection of type "${new_selection.what}"`);
               break;
         }
+
+        this.redraw();
       },
       // but we want to see all changes here, might be some timestamp changed
       deep : true,
