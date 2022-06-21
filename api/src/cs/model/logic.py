@@ -102,6 +102,7 @@ def search(media_types, tag_handles, user_handles):
 			})
 			last_user_handle = row['user_handle']
 		taggings.append({
+			'user_handle' : row['user_handle'],
 			'media_handle' : row['media_handle'],
 			'tag_handle' : row['tag_handle'],
 			'handle' : row['tagging_handle'],
