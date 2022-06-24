@@ -38,7 +38,6 @@ export default {
   setup : function() {
   },
   mounted : async function() {
-    console.log(this.$refs.actual_text);
     this.$refs.actual_text.spellcheck = false;
     this.$refs.actual_text.addEventListener('mouseup', (event) => {
       let sel = document.getSelection();
@@ -89,7 +88,7 @@ export default {
     await window.fetch(this.src)
     .then((resp) => resp.text())
     .then((text) => {
-      //text = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      text = 'abcdefghi';
       this.original_text = text;
       this.redraw();
     });
@@ -129,8 +128,10 @@ export default {
         },
       ];
 
+      // splits the regions at the mark
       // assumes there is an existing region in which the mark will fall
       function splice_regions_around(regions, mark) {
+        console.log(`splice_regions_around(mark=${mark}!)`);
 
         // first find the region in which the mark occurs
         let found = undefined;
@@ -138,35 +139,43 @@ export default {
         for (let i = 0; i < regions.length; i++) {
           let r = regions[i];
 
-          if ((r.offset <= mark) && (mark < (r.offset + r.length))) {
+          if ((r.offset <= mark) && (mark <= (r.offset + r.length))) {
             found = i;
           }
         }
         if (mark == regions[found].offset) {
           // no need for a new region, just return this one
+          console.log(`found in found=${found}!`);
           return found;
         } else {
           // splice region into two parts
 
-          // add a new region [mark + found.stop]
-          regions.splice(found + 1, 0, {
-            offset : mark,
-            length : regions[found].length - (mark - regions[found].offset),
-            which : [...regions[found].which],
-          })
+          let new_offset = mark;
+          let new_length = regions[found].length - (mark - regions[found].offset);
 
-          // cap the original region
-          regions[found].length = mark - regions[found].offset;
+          if (new_length) {
+            // only do this if this is a non-zero length region (might not be at end boundary)
 
-          // the newly created one is the relevant one
+            // add a new region [mark + found.stop]
+            regions.splice(found + 1, 0, {
+              offset : new_offset,
+              length : new_length,
+              which : [...regions[found].which],
+            })
+
+            // cap the original region
+            regions[found].length = mark - regions[found].offset;
+          }
+
           return found + 1;
         }
-      }
+      };
 
       function splice_range(regions, a_range, meta) {
         let first_region = splice_regions_around(regions, a_range.from);
         let last_region = splice_regions_around(regions, a_range.to);
 
+        console.log(`splice_range(first_region=${first_region} last_region=${last_region})`);
         for (let i = first_region; i < last_region; i++) {
           regions[i].which.push(meta);
         }
@@ -187,11 +196,13 @@ export default {
         }
       }
 
-      console.dir(this.selection);
+      console.log('selection==');
+      console.log(this.selection);
       if (this.selection && this.selection.what == 'range') {
         splice_range(this.regions, this.selection, { colour : this.selection_colour });
       }
 
+      console.log('regions=');
       console.dir(this.regions);
       for (let i = 0; i < this.regions.length; i++) {
         let r = this.regions[i];
