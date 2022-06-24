@@ -56,6 +56,7 @@
               value="reporting"
               label="Reporting">
               <FilterChooser
+                :filter_string="filter_string"
                 class="column is-full mb-6"
                 />
               <MediaDisplay
@@ -83,6 +84,10 @@ import MediaTag from "./components/MediaTag.vue";
 import MediaDisplay from "./components/MediaDisplay.vue";
 import FilterChooser from '@/components/FilterChooser.vue';
 import NavBar from '@/components/NavBar.vue';
+
+const ARG_EQ = '=';
+const ARG_SEP = ',';
+
 export default {
   name : 'App',
   components : {
@@ -95,6 +100,7 @@ export default {
   data : function() {
     return {
       active_tab : "tagging",
+      filter_string : '',
       boon : this.store.boon,
       auth : {
         email : '',
@@ -119,16 +125,36 @@ export default {
       this.store.add_user(data);
     },
     tagging_created : function(data) {
-      console.log(`TAGGING data=${data}`);
       this.store.add_tagging(data);
     },
   },
   mounted : function() {
     this.$socket.emit('debug', 'new client');
+    this.store.last_load.then(() => {
+      this.process_hash();
+    });
   },
   methods : {
-    foob : async function() {
-      await fetch(api_target + '/api/login', { method : 'POST' });
+    process_hash : function() {
+      let h = location.hash;
+      if (h && h.length) {
+        // skip over '#'
+        h = h.substr(1);
+
+        h.split(ARG_SEP).forEach((arg) => {
+          let k, v;
+          [ k, v ] = arg.split(ARG_EQ);
+          switch (k) {
+            case 'report':
+                this.filter_string = v;
+                this.active_tab = 'reporting';
+                break;
+            default:
+                console.log(`error; unknown hash argument ${k}`);
+                break;
+          }
+        });
+      }
     },
     try_auth : async function() {
       this.auth.trying = true;

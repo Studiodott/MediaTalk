@@ -15,6 +15,7 @@ export const Store = defineStore('Store', {
 			taggings : [],
 			users : [],
 		},
+		last_load : undefined,
 		logged_in : localStorage.access_token != undefined,
 	}),
 	actions: {
@@ -68,7 +69,9 @@ export const Store = defineStore('Store', {
 				},
 			};
 
-			window.fetch(api_target + '/api/media', std_opts)
+			let p = [];
+
+			p.push(window.fetch(api_target + '/api/media', std_opts)
 			.then(resp => resp.json())
 			.then(data => {
 				this.live.media.splice(0);
@@ -76,9 +79,9 @@ export const Store = defineStore('Store', {
 			})
 			.catch((error) => {
 				this.log_out();
-			});
+			}));
 
-			window.fetch(api_target + '/api/tag', std_opts)
+			p.push(window.fetch(api_target + '/api/tag', std_opts)
 			.then(resp => resp.json())
 			.then(data => {
 				this.live.tags.splice(0);
@@ -86,9 +89,9 @@ export const Store = defineStore('Store', {
 			})
 			.catch((error) => {
 				this.log_out();
-			});
+			}));
 
-			window.fetch(api_target + '/api/user', std_opts)
+			p.push(window.fetch(api_target + '/api/user', std_opts)
 			.then(resp => resp.json())
 			.then(data => {
 				this.live.users.splice(0);
@@ -96,9 +99,9 @@ export const Store = defineStore('Store', {
 			})
 			.catch((error) => {
 				this.log_out();
-			});
+			}));
 
-			window.fetch(api_target + '/api/tagging', std_opts)
+			p.push(window.fetch(api_target + '/api/tagging', std_opts)
 			.then(resp => resp.json())
 			.then(data => {
 				this.live.taggings.splice(0);
@@ -109,7 +112,10 @@ export const Store = defineStore('Store', {
 			})
 			.catch((error) => {
 				this.log_out();
-			});
+			}));
+
+			this.last_load = Promise.all(p);
+			console.log("LOADED");
 
 		},
 		async search(media_types, tag_handles, user_handles) {
