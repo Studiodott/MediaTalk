@@ -71,6 +71,7 @@ export default {
     log_out : function() {
       console.log('logging out');
       this.store.log_out();
+      location.reload();
     },
   },
   mounted : function() {

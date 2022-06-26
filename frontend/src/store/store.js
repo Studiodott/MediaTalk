@@ -116,6 +116,7 @@ export const Store = defineStore('Store', {
 
 			this.last_load = Promise.all(p);
 			console.log("LOADED");
+			return this.last_load;
 
 		},
 		async search(media_types, tag_handles, user_handles) {

@@ -109,30 +109,14 @@ export default {
   },
   setup : function() {
     const store = Store();
-    store.load();
     return {
       store,
     };
   },
-  sockets: {
-    tag_created : function(data) {
-      this.store.add_tag(data);
-    },
-    media_created : function(data) {
-      this.store.add_media(data);
-    },
-    user_created : function(data) {
-      this.store.add_user(data);
-    },
-    tagging_created : function(data) {
-      this.store.add_tagging(data);
-    },
-  },
   mounted : function() {
-    this.$socket.emit('debug', 'new client');
-    this.store.last_load.then(() => {
-      this.process_hash();
-    });
+    if (this.store.logged_in) {
+      this.load_world();
+    }
   },
   methods : {
     process_hash : function() {
@@ -156,10 +140,33 @@ export default {
         });
       }
     },
+    load_world : async function() {
+      this.store.load().then(() => {
+        // store load was fine, hookup websockets
+        this.sockets.subscribe('tag_created', (data) => {
+          this.store.add_tag(data);
+        });
+        this.sockets.subscribe('media_created', (data) => {
+          this.store.add_media(data);
+        });
+        this.sockets.subscribe('user_created', (data) => {
+          this.store.add_user(data);
+        });
+        this.sockets.subscribe('tagging_created', (data) => {
+          this.store.add_tagging(data);
+        });
+      }).then(() => {
+        this.process_hash();
+      }).catch((e) => {
+        // TODO show, allow retry
+      });
+    },
     try_auth : async function() {
-      this.auth.trying = true;
-      await this.store.try_auth(this.auth.email);
-      this.auth.trying = false;
+      this.store.try_auth(this.auth.email).then(() => {
+        this.load_world();
+      }).catch((e) => {
+        // TODO show, allow retry
+      });
     },
   },
 };
