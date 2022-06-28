@@ -89,9 +89,10 @@ export default {
     highlights : {
       handler : function(new_highlights) {
         let highlights = [];
+        let emp = new_highlights.emphasis;
 
         // build up a new list & install it
-        new_highlights.forEach((h) => {
+        new_highlights.taggings.forEach((h) => {
           let p = h.position;
           switch (p.what) {
             case 'all':
@@ -101,6 +102,7 @@ export default {
                   'what' : 'point',
                   'at' : this.delogicalize_timestamp(p.at),
                   'colour' : h.colour,
+                  'emphasized' : emp.length ? emp.includes(h.handle) : true,
                 });
                 break;
             case 'range' : 
@@ -109,6 +111,7 @@ export default {
                   'from' : this.delogicalize_timestamp(p.from),
                   'to' : this.delogicalize_timestamp(p.to),
                   'colour' : h.colour,
+                  'emphasized' : emp.length ? emp.includes(h.handle) : true,
                 });
                 break;
             default:
@@ -118,8 +121,8 @@ export default {
         this.display.highlights = highlights;
 
         // if there is a first, jump towards it
-        if (new_highlights && new_highlights.length) {
-          let first = new_highlights[0].position;
+        if (new_highlights && new_highlights.taggings && new_highlights.taggings.length) {
+          let first = new_highlights.taggings[0].position;
           switch (first.what) {
             case 'all':
                 break;
@@ -137,7 +140,6 @@ export default {
 
         this.redraw();
       },
-      // no need to deep-follow, we need list changes, not item changes
       deep : false,
     },
     // same for the selection, but take care that it could be a range with
@@ -286,7 +288,11 @@ export default {
       ctx.clearRect(0, 0, w, h);
 
       function draw(something) {
-        ctx.fillStyle = something.colour + '7f';
+        if (something.emphasized)
+          ctx.fillStyle = something.colour + '9f';
+        else
+          ctx.fillStyle = something.colour + '5f';
+
         ctx.strokeStyle = something.colour + 'ff';
         if (something.what == 'point') {
           let pos = something.at;

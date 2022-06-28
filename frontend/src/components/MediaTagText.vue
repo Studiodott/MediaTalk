@@ -38,7 +38,6 @@ export default {
   setup : function() {
   },
   mounted : async function() {
-    console.log(this.$refs.actual_text);
     this.$refs.actual_text.spellcheck = false;
     this.$refs.actual_text.addEventListener('mouseup', (event) => {
       let sel = document.getSelection();
@@ -89,7 +88,6 @@ export default {
     await window.fetch(this.src)
     .then((resp) => resp.text())
     .then((text) => {
-      //text = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
       this.original_text = text;
       this.redraw();
     });
@@ -105,7 +103,6 @@ export default {
   methods : {
     redraw() {
       //this.$refs.actual_text.value = this.original_text;
-      console.log("redraw");
       let output = '';
 
       let dest = this.$refs.actual_text;
@@ -129,43 +126,45 @@ export default {
         },
       ];
 
+      // splits the regions at the mark
       // assumes there is an existing region in which the mark will fall
       function splice_regions_around(regions, mark) {
-
-        console.dir(regions);
-        console.log(`looking for mark=${mark}`);
         // first find the region in which the mark occurs
         let found = undefined;
 
         for (let i = 0; i < regions.length; i++) {
           let r = regions[i];
 
-          console.log(`considering r.offset=${r.offset} r.length=${r.length}`);
-          if ((r.offset <= mark) && (mark < (r.offset + r.length))) {
+          if ((r.offset <= mark) && (mark <= (r.offset + r.length))) {
             found = i;
           }
         }
-        console.log(`found=${found}`);
         if (mark == regions[found].offset) {
           // no need for a new region, just return this one
           return found;
         } else {
           // splice region into two parts
 
-          // add a new region [mark + found.stop]
-          regions.splice(found + 1, 0, {
-            offset : mark,
-            length : regions[found].length - (mark - regions[found].offset),
-            which : [...regions[found].which],
-          })
+          let new_offset = mark;
+          let new_length = regions[found].length - (mark - regions[found].offset);
 
-          // cap the original region
-          regions[found].length = mark - regions[found].offset;
+          if (new_length) {
+            // only do this if this is a non-zero length region (might not be at end boundary)
 
-          // the newly created one is the relevant one
+            // add a new region [mark + found.stop]
+            regions.splice(found + 1, 0, {
+              offset : new_offset,
+              length : new_length,
+              which : [...regions[found].which],
+            })
+
+            // cap the original region
+            regions[found].length = mark - regions[found].offset;
+          }
+
           return found + 1;
         }
-      }
+      };
 
       function splice_range(regions, a_range, meta) {
         let first_region = splice_regions_around(regions, a_range.from);
@@ -176,11 +175,9 @@ export default {
         }
       }
 
-
-      console.log("highlights");
-      if (this.highlights && this.highlights.length) {
+      if (this.highlights && this.highlights.taggings &&  this.highlights.taggings.length) {
         // a localized copy of highlights which is from-ascending
-        let highlights = [...this.highlights];
+        let highlights = [...this.highlights.taggings];
         highlights.sort((l, r) => {
           let l_val = (l.position.what == 'point') ? l.position.at : l.position.from;
           let r_val = (r.position.what == 'point') ? r.position.at : r.position.from;
@@ -188,21 +185,21 @@ export default {
         });
 
         for (let i = 0; i < highlights.length; i++) {
-          console.dir(highlights[i]);
-          if (![ 'point', 'range' ].includes(highlights[i].position.what))
-            continue;
-          splice_range(this.regions, highlights[i].position, { colour : highlights[i].colour });
+          let c = highlights[i].colour;
+
+          if (this.highlights.emphasis.length == 0  || this.highlights.emphasis.includes(highlights[i].handle)) {
+            c += 'ff';
+          } else {
+            c += '7f';
+          }
+          splice_range(this.regions, highlights[i].position, { colour : c });
         }
       }
 
-      console.log("selection");
-      console.dir(this.selection);
       if (this.selection && this.selection.what == 'range') {
         splice_range(this.regions, this.selection, { colour : this.selection_colour });
       }
 
-      console.log("regions");
-      console.dir(this.regions);
       for (let i = 0; i < this.regions.length; i++) {
         let r = this.regions[i];
         r.span = buildSpan(r.offset, r.length, this.original_text);

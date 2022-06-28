@@ -110,9 +110,9 @@ export default {
       this.selection_for_media = selection;
     },
     // we ourselves want a tagging list highlighted, propagate to media
-    highlight_taggings : function(l) {
-      console.log(`highlighted ${l.length} taggings`);
-      this.highlights_for_media = l;
+    highlight_taggings : function(t) {
+      console.dir(t);
+      this.highlights_for_media = t;
     },
   },
   computed : {

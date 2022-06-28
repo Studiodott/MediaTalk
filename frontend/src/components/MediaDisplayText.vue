@@ -88,7 +88,6 @@ export default {
     await window.fetch(this.src)
     .then((resp) => resp.text())
     .then((text) => {
-      text = 'abcdefghi';
       this.original_text = text;
       this.redraw();
     });
@@ -104,7 +103,6 @@ export default {
   methods : {
     redraw() {
       //this.$refs.actual_text.value = this.original_text;
-      console.log("redraw");
       let output = '';
 
       let dest = this.$refs.actual_text;
@@ -131,8 +129,6 @@ export default {
       // splits the regions at the mark
       // assumes there is an existing region in which the mark will fall
       function splice_regions_around(regions, mark) {
-        console.log(`splice_regions_around(mark=${mark}!)`);
-
         // first find the region in which the mark occurs
         let found = undefined;
 
@@ -145,7 +141,6 @@ export default {
         }
         if (mark == regions[found].offset) {
           // no need for a new region, just return this one
-          console.log(`found in found=${found}!`);
           return found;
         } else {
           // splice region into two parts
@@ -175,16 +170,14 @@ export default {
         let first_region = splice_regions_around(regions, a_range.from);
         let last_region = splice_regions_around(regions, a_range.to);
 
-        console.log(`splice_range(first_region=${first_region} last_region=${last_region})`);
         for (let i = first_region; i < last_region; i++) {
           regions[i].which.push(meta);
         }
       }
 
-
-      if (this.highlights && this.highlights.length) {
+      if (this.highlights && this.highlights.taggings &&  this.highlights.taggings.length) {
         // a localized copy of highlights which is from-ascending
-        let highlights = [...this.highlights];
+        let highlights = [...this.highlights.taggings];
         highlights.sort((l, r) => {
           let l_val = (l.position.what == 'point') ? l.position.at : l.position.from;
           let r_val = (r.position.what == 'point') ? r.position.at : r.position.from;
@@ -192,18 +185,21 @@ export default {
         });
 
         for (let i = 0; i < highlights.length; i++) {
-          splice_range(this.regions, highlights[i].position, { colour : highlights[i].colour });
+          let c = highlights[i].colour;
+
+          if (this.highlights.emphasis.length == 0  || this.highlights.emphasis.includes(highlights[i].handle)) {
+            c += 'ff';
+          } else {
+            c += '7f';
+          }
+          splice_range(this.regions, highlights[i].position, { colour : c });
         }
       }
 
-      console.log('selection==');
-      console.log(this.selection);
       if (this.selection && this.selection.what == 'range') {
         splice_range(this.regions, this.selection, { colour : this.selection_colour });
       }
 
-      console.log('regions=');
-      console.dir(this.regions);
       for (let i = 0; i < this.regions.length; i++) {
         let r = this.regions[i];
         r.span = buildSpan(r.offset, r.length, this.original_text);

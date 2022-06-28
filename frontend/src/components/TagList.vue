@@ -6,8 +6,8 @@
       animation="slide"
       v-for="(taggings, tag_handle, tag_index) in getTaggingsForMedia"
       :key="tag_index"
-      @open="collapse_open_on = tag_index; select_taggings(taggings)"
-      @close="select_taggings([])"
+      @open="collapse_open_on = tag_index; highlight(taggings, [])"
+      @close="highlight([], [])"
       :open="collapse_open_on == tag_index">
       <template #trigger="props">
         <div
@@ -34,10 +34,11 @@
             variant="primary"
             multiline>
             <span
-              @click="select_taggings([ tagging ])"
+              @click="highlight(taggings, [ tagging.handle ])"
               class="tag tagging"
               :style="'background: '+ tagging.colour + ';'">
-              {{ 'icon' }} {{ (tagging.comment && tagging.comment.length) ? '*' : '' }}
+              <o-icon icon="tag" size="small"></o-icon>
+              <o-icon v-if="tagging.comment && tagging.comment.length" icon="comment" size="small"></o-icon>
             </span>
             <template v-slot:content>
               {{ get_time_ago(tagging.created_at) }} by {{ get_user_key(tagging.user_handle) }}
@@ -86,6 +87,10 @@ export default {
       console.log(`selected ${taggings.length} taggings`);
       this.$emit('select', taggings); //.map(ti => ti.position));
     },
+    highlight: function(taggings, emphasis) {
+      this.$emit('select', { taggings : taggings, emphasis: emphasis });
+    },
+
     get_tag_name : function(tag_handle) {
       let tag = this.store.get_tag(tag_handle);
       if (!tag) {

@@ -46,8 +46,9 @@ export default {
     highlights : {
       handler : function(new_highlights) {
         let highlights = [];
+        let emp = new_highlights.emphasis;
 
-        new_highlights.forEach((h) => {
+        new_highlights.taggings.forEach((h) => {
           let p = h.position;
           switch (p.what) {
             case 'all':
@@ -57,6 +58,7 @@ export default {
                   'what' : 'point',
                   'at' : this.delogicalize_coords(p.at.x, p.at.y),
                   'colour' : h.colour,
+                  'emphasized' : emp.length ? emp.includes(h.handle) : true,
                 });
                 break;
             case 'range' : 
@@ -65,6 +67,7 @@ export default {
                   'from' : this.delogicalize_coords(p.from.x, p.from.y),
                   'to' : this.delogicalize_coords(p.to.x, p.to.y),
                   'colour' : h.colour,
+                  'emphasized' : emp.length ? emp.includes(h.handle) : true,
                 });
                 break;
             default:
@@ -74,7 +77,6 @@ export default {
         this.display.highlights = highlights;
         this.redraw();
       },
-      // no need to deep-follow, we need list changes, not item changes
       deep : false,
     },
   },
@@ -94,6 +96,8 @@ export default {
         y : where.y
       };
       this.display.selection = {
+        colour : this.selection_colour,
+        emphasis : true,
         what  : 'range',
         from : {
           x : where.x,
@@ -156,6 +160,8 @@ export default {
         // didn't reach MIN_DRAGGING_TIME and no movement, it's a point click, over-
         // write any existing drag
         this.display.selection = {
+          colour : this.selection_colour,
+          emphasis : true,
           what : 'point',
           at : {
             x : where.x,
@@ -234,8 +240,12 @@ export default {
       ctx.clearRect(0, 0, ctx_w, ctx_h);
 
       function draw(something) {
-        // draw a point or a range
-        ctx.fillStyle = something.colour + '7f';
+        if (something.emphasized)
+          ctx.fillStyle = something.colour + '9f';
+        else
+          ctx.fillStyle = something.colour + '5f';
+
+
         ctx.strokeStyle = something.colour + 'ff';
         if (something.what == 'point') {
           ctx.beginPath();
@@ -269,8 +279,6 @@ export default {
       let selection = this.display.selection;
       if (selection) {
         // relevant style
-        ctx.fillStyle = this.selection_colour + '7f';
-        ctx.strokeStyle = this.selection_colour + 'ff';
         ctx.lineWidth = 2;
 
         // draw a point or a range
