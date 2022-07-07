@@ -17,6 +17,9 @@ export const Store = defineStore('Store', {
 		},
 		last_load : undefined,
 		logged_in : localStorage.access_token != undefined,
+		runtime : {
+			audio_volume : 50,
+		},
 	}),
 	actions: {
 		async try_auth(email) {
@@ -154,31 +157,71 @@ export const Store = defineStore('Store', {
 				this.log_out();
 			});
 		},
-		add_media(media) {
+		media_added(media) {
 			this.live.media = this.live.media.filter((e_media) => {
 				return media.handle != e_media.handle;
 			});
 			this.live.media.splice(0, 0, media);
 		},
-		add_user(user) {
+		user_added(user) {
 			this.live.users = this.live.users.filter((e_user) => {
 				return user.handle != e_user.handle;
 			});
 			this.live.users.splice(0, 0, user);
 		},
-		add_tag(tag) {
+		tag_added(tag) {
 			this.live.tags = this.live.tags.filter((e_tag) => {
 				return tag.handle != e_tag.handle;
 			});
 			this.live.tags.splice(0, 0, tag);
 		},
-		add_tagging(tagging) {
+		tagging_added(tagging) {
 			tagging.position = JSON.parse(tagging.position);
 			this.live.taggings = this.live.taggings.filter((e_tagging) => {
 				return tagging.handle != e_tagging.handle;
 			});
 			this.live.taggings.splice(0, 0, tagging);
 		},
+		tag_removed(handle) {
+			this.live.tags = this.live.tags.filter((e_tag) => {
+				return handle != e_tag.handle;
+			});
+			this.live.taggings = this.live.taggings.filter((e_tagging) => {
+				return handle != e_tagging.tag_handle;
+			});
+		},
+		tagging_removed(handle) {
+			this.live.taggings = this.live.taggings.filter((e_tagging) => {
+				return handle != e_tagging.handle;
+			});
+		},
+		async remove_tagging(handle) {
+			let t = await window.fetch(api_target + `/api/tagging/${handle}`, {
+				method : 'DELETE',
+				headers : {
+					'Content-Type' : 'application/json',
+					'Authorization' : `Bearer ${localStorage.access_token}`,
+				},
+			}).catch((error) => {
+				console.log("error while deleting tag: " + error);
+				this.logout();
+			});
+			return t;
+		},
+		async remove_tag(handle) {
+			let t = await window.fetch(api_target + `/api/tag/${handle}`, {
+				method : 'DELETE',
+				headers : {
+					'Content-Type' : 'application/json',
+					'Authorization' : `Bearer ${localStorage.access_token}`,
+				},
+			}).catch((error) => {
+				console.log("error while deleting tag: " + error);
+				this.logout();
+			});
+			return t;
+		},
+
 		async create_tag(name, description='') {
 			let t = await window.fetch(api_target + '/api/tag', {
 				method : 'POST',

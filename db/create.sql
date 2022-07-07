@@ -112,9 +112,9 @@ create table "tagging"
 	comment character varying (256),
 	created_at timestamp not null,
 	primary key (id),
-	constraint tagging_media_fk foreign key (media_id) references media (id),
-	constraint tagging_tag_fk foreign key (tag_id) references tag (id),
-	constraint tagging_user_fk foreign key (user_id) references "user" (id)
+	constraint tagging_media_fk foreign key (media_id) references media (id) on delete cascade,
+	constraint tagging_tag_fk foreign key (tag_id) references tag (id) on delete cascade,
+	constraint tagging_user_fk foreign key (user_id) references "user" (id) on delete cascade
 );
 create unique index tagging_handle_idx on tagging (handle);
 

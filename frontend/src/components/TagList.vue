@@ -16,7 +16,7 @@
           :aria-controls="'contentIdForA11y5-' + tag_index"
           :aria-expanded="collapse_open_on">
           <p
-              class="card-header-title">
+            class="card-header-title">
             {{ get_tag_name(tag_handle) }}
           </p>
           <a
@@ -28,29 +28,84 @@
         </div>
       </template>
       <div class="card-content">
-        <div class="content is-flex is-flex-direction-row is-flex-wrap-wrap tagging-box">
-          <o-tooltip
-            v-for="(tagging, tagging_index) in taggings"
-            variant="primary"
-            multiline>
-            <span
-              @click="highlight(taggings, [ tagging.handle ])"
-              class="tag tagging"
-              :style="'background: '+ tagging.colour + ';'">
-              <o-icon icon="tag" size="small"></o-icon>
-              <o-icon v-if="tagging.comment && tagging.comment.length" icon="comment" size="small"></o-icon>
-            </span>
-            <template v-slot:content>
-              {{ get_time_ago(tagging.created_at) }} by {{ get_user_key(tagging.user_handle) }}
-              <b
-                v-if="tagging.comment && tagging.comment.length">
-                comment "{{ tagging.comment }}"
-              </b>
-            </template>
-          </o-tooltip>
-        </div>
+        <div
+          class="content field is-grouped is-grouped-multiline tagging-box">
 
-      </div>
+          <!-- tagging list -->
+          <div
+            class="control"
+            v-for="(tagging, tagging_index) in taggings">
+
+            <!-- individual taggings -->
+            <div
+              class="tags has-addons">
+              <!-- each tagging is it's name -->
+              <span
+                class="tag"
+                @click="highlight(taggings, [ tagging.handle ])"
+                :style="'background: ' + tagging.colour + ';'">
+                <o-icon
+                  icon="tag"
+                  size="small">
+                </o-icon>
+                <o-icon
+                  v-if="tagging.comment && tagging.comment.length"
+                  icon="comment"
+                  size="small">
+                </o-icon>
+                <span>
+                  {{ get_tag_name(tag_handle) }}
+                </span>
+              </span>
+              <!-- and a dropdown for options -->
+              <div
+                class="tag">
+                <o-dropdown
+                  aria-role="list">
+                  <template
+                    v-slot:trigger>
+                    <o-icon
+                      icon="caret-down"
+                      size="small">
+                    </o-icon>
+                  </template>
+                  <o-dropdown-item
+                    aria-role="listitem">{{ get_time_ago(tagging.created_at) }} by {{ get_user_key(tagging.user_handle) }}</o-dropdown-item>
+                  <o-dropdown-item
+                    v-if="tagging.comment && tagging.comment.length"
+                    aria-role="listitem">comment <i>"{{ tagging.comment }}"</i></o-dropdown-item>
+                  <o-dropdown-item
+                    aria-role="listitem"></o-dropdown-item>
+                  <o-dropdown-item
+                    aria-role="listitem">
+                    <o-button
+                      size="small"
+                      class="is-fullwidth"
+                      icon-left="trash-can"
+                      variant="danger"
+                      @click="remove_tagging(tagging.handle)">
+                      remove tagging
+                    </o-button>
+                  </o-dropdown-item>
+                </o-dropdown>
+              </div> <!-- class="tag" -->
+
+            </div> <!-- individual tags, class="tags has-addons" -->
+
+          </div> <!-- tagging list -->
+        </div> <!-- tagging-box -->
+
+        <!-- general options for this tag -->
+        <o-button
+          size="small"
+          class="is-fullwidth p-2"
+          icon-left="trash-can"
+          variant="danger"
+          @click="remove_tag(tag_handle)">
+          remove entire tag
+        </o-button>
+
+      </div> <!-- card content -->
     </o-collapse>
   </section>
 </template>
@@ -110,6 +165,13 @@ export default {
     get_time_ago : function(ts) {
       return timeago.format(ts);
     },
+    remove_tagging : function(handle) {
+      this.store.remove_tagging(handle);
+    },
+    remove_tag : function(handle) {
+      this.store.remove_tag(handle);
+    },
+
   },
   computed : {
     getTaggingsForMedia() {

@@ -139,6 +139,22 @@ class TagManagerResource(Resource):
 
 api.add_resource(TagManagerResource, '/api/tag')
 
+class TagResource(Resource):
+	@marshal_with(tag_fields)
+	def get(self, handle):
+		return tag.get(handle), 200
+	def delete(self, handle):
+		print(f'TAGREMOVE {handle}')
+		print(f'TAGREMOVE {handle}')
+		print(f'TAGREMOVE {handle}')
+		print(f'TAGREMOVE {handle}')
+		tag.remove(handle)
+		socketio.emit('tag_removed', handle)
+		g.db_commit = True
+		return '', 201
+api.add_resource(TagResource, '/api/tag/<handle>')
+
+
 tagging_fields = {
 	'handle' : fields.String,
 	'media_handle' : fields.String,
@@ -188,6 +204,15 @@ class TaggingResource(Resource):
 	@marshal_with(tagging_fields)
 	def get(self, handle):
 		return tagging.get(handle), 200
+	def delete(self, handle):
+		print(f'TAGGING REMOVE {handle}')
+		print(f'TAGGING REMOVE {handle}')
+		print(f'TAGGING REMOVE {handle}')
+		print(f'TAGGING REMOVE {handle}')
+		tagging.remove(handle)
+		socketio.emit('tagging_removed', handle)
+		g.db_commit = True
+		return '', 201
 api.add_resource(TaggingResource, '/api/tagging/<handle>')
 
 search_fields = {

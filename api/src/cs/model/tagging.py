@@ -54,6 +54,15 @@ def get(handle):
 	})
 	return g.db_cur.fetchone()
 
+def remove(handle):
+	q = """
+		DELETE FROM tagging
+		WHERE handle = %(handle)s;"""
+
+	g.db_cur.execute(q, {
+		'handle' : handle,
+	})
+
 def create(media_handle, tag_handle, user_handle, position, comment=''):
 	handle = key()
 

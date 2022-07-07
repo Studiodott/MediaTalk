@@ -40,6 +40,15 @@ def get(handle):
 	})
 	return g.db_cur.fetchone()
 
+def remove(handle):
+	q = """
+		DELETE FROM tag
+		WHERE handle = %(handle)s;"""
+
+	g.db_cur.execute(q, {
+		'handle' : handle,
+	})
+
 def create(name, description):
 	handle = key()
 
