@@ -25,7 +25,8 @@
 </template>
 
 <script>
-import { nextTick } from 'vue';
+import { nextTick, watch } from 'vue';
+import { Store } from '@/store/store.js';
 
 const FPS = 25;
 

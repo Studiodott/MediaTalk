@@ -1,7 +1,7 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
   <nav
-    class="navbar"
+    class="navbar is-fixed-top"
     role="navigation"
     aria-label="main navigation">
     <div
@@ -33,7 +33,22 @@
         class="navbar-start">
       </div>
       <div
-        class="navbar-end">
+        class="navbar-end is-flex is-flex is-align-items-center">
+        <o-icon
+          icon="volume-high">
+        </o-icon>
+        <div
+          style="width: 150px;"
+          class="navbar-item">
+          <o-slider
+            :max="100"
+            :min="0"
+            :tooltip="false"
+            size="large"
+            v-model="store.runtime.audio_volume"
+            class="is-fullwidth">
+          </o-slider>
+        </div>
         <div
           class="navbar-item">
           <div

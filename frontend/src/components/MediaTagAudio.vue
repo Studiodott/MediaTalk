@@ -54,7 +54,8 @@
 </template>
 
 <script>
-import { nextTick } from 'vue';
+import { nextTick, watch } from 'vue';
+import { Store } from '@/store/store.js';
 
 const FPS = 25;
 
@@ -82,6 +83,8 @@ export default {
     'advanced'
   ],
   setup : function() {
+    const store = Store();
+    return { store };
   },
   watch : {
     // upon highlights change, flush out the old display list and rebuild it
@@ -211,8 +214,18 @@ export default {
       let when = this.timeline_resolve_click(event.clientX, event.clientY);
       this.set_position(when);
     });
+
+    // follow volume changes
+    this.update_volume(this.store.runtime.audio_volume);
+    watch(this.store.runtime, (rt) => {
+      this.update_volume(rt.audio_volume);
+    });
   },
   methods : {
+    // update volume
+    update_volume : function(pct) {
+      this.$refs.actual_audio.volume = pct / 100.0;
+    },
     // when the image is loaded, resize the containing div so that
     // it (and the canvas) fit
     image_loaded : function() {

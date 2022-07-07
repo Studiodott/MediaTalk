@@ -144,17 +144,24 @@ export default {
       this.store.load().then(() => {
         // store load was fine, hookup websockets
         this.sockets.subscribe('tag_created', (data) => {
-          this.store.add_tag(data);
+          this.store.tag_added(data);
         });
         this.sockets.subscribe('media_created', (data) => {
-          this.store.add_media(data);
+          this.store.media_added(data);
         });
         this.sockets.subscribe('user_created', (data) => {
-          this.store.add_user(data);
+          this.store.user_added(data);
         });
         this.sockets.subscribe('tagging_created', (data) => {
-          this.store.add_tagging(data);
+          this.store.tagging_added(data);
         });
+        this.sockets.subscribe('tagging_removed', (data) => {
+          this.store.tagging_removed(data);
+        });
+        this.sockets.subscribe('tag_removed', (data) => {
+          this.store.tag_removed(data);
+        });
+
       }).then(() => {
         this.process_hash();
       }).catch((e) => {
