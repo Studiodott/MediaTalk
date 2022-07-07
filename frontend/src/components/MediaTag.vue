@@ -129,7 +129,6 @@ export default {
     },
     // the media called a selection, propagate to tagchooser
     selected_by_media(selection) {
-      console.log(selection);
       this.selection_for_tagchooser = selection;
     },
     // the tagchooser called a selection, propagate to media

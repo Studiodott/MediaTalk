@@ -178,6 +178,13 @@ export default {
               break;
         }
 
+        // pause if needs be
+        if (new_selection.what == 'range') {
+          if (new_selection.from && new_selection.to) {
+            this.$refs.actual_audio.pause();
+          }
+        }
+
         this.redraw();
       },
       // but we want to see all changes here, might be some timestamp changed
