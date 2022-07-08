@@ -2,15 +2,23 @@
 <template>
   <div
     class="box">
-    <o-field
-      label="Show only">
-      <o-checkbox
-        v-for="mt in available_media_types"
-        v-model="chosen_media_types"
-        :native-value="mt">
-        {{ mt.toLowerCase() }}
-      </o-checkbox>
-    </o-field>
+    <div
+      class="is-flex is-flex-direction-row is-justify-content-space-between">
+      <o-field
+        label="Show only">
+        <o-checkbox
+          v-for="mt in available_media_types"
+          v-model="chosen_media_types"
+          :native-value="mt">
+          {{ mt.toLowerCase() }}
+        </o-checkbox>
+      </o-field>
+      <o-button
+        variant="info"
+        @click="show_link">
+        Share this filter
+      </o-button>
+    </div>
     <o-field
       label="And only tags">
       <o-inputitems
@@ -34,16 +42,11 @@
         @typing="get_filtered_users"/>
     </o-field>
     <div
-      class="is-flex is-flex-direction-row is-justify-content-space-between">
+      class="is-flex is-flex-direction-row is-justify-content-end">
       <o-button
         variant="primary"
         @click="update">
         Apply
-      </o-button>
-      <o-button
-        variant="info"
-        @click="show_link">
-        Share this filter
       </o-button>
     </div>
 
