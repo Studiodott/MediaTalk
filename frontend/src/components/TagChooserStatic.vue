@@ -157,7 +157,8 @@ export default {
     },
     reset() {
       this.update_selected(undefined);
-      this.chosenTags = [];
+      if (!this.store.runtime.sticky_tags)
+        this.chosenTags = [];
       this.comment = '';
       this.$emit('cleared', undefined);
     },

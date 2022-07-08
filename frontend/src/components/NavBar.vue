@@ -34,12 +34,22 @@
       </div>
       <div
         class="navbar-end is-flex is-flex is-align-items-center">
-        <o-icon
-          icon="volume-high">
-        </o-icon>
+        <div
+          class="navbar-item">
+          <o-field>
+            <o-switch
+              v-model="store.runtime.sticky_tags">
+              Sticky tags
+            </o-switch>
+          </o-field>
+        </div>
         <div
           style="width: 150px;"
           class="navbar-item">
+          <o-icon
+            class="pr-2"
+            icon="volume-high">
+          </o-icon>
           <o-slider
             :max="100"
             :min="0"

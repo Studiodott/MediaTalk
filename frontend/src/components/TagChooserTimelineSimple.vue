@@ -207,7 +207,8 @@ export default {
       });
     },
     reset() {
-      this.chosenTags = [];
+      if (!this.store.runtime.sticky_tags)
+        this.chosenTags = [];
       this.comment = '';
       this.mode = 'all';
       this.selected = undefined;

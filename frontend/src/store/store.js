@@ -19,6 +19,7 @@ export const Store = defineStore('Store', {
 		logged_in : localStorage.access_token != undefined,
 		runtime : {
 			audio_volume : 50,
+			sticky_tags : false,
 		},
 	}),
 	actions: {
