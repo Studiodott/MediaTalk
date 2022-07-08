@@ -2,13 +2,32 @@
 <template>
   <div
     class="is-flex is-flex-direction-column is-flex-align-items-stretch">
-    <video
-      id="actual_video"
-      ref="actual_video">
-      <source
-        v-bind:src="src">
-      No browser support for video :-(
-    </video>
+    <div
+      id="video_container">
+      <video
+        @load="console.log('LOAD')"
+        id="actual_video"
+        ref="actual_video">
+        <source
+          v-bind:src="src">
+        No browser support for video :-(
+      </video>
+      <div
+        id="stubbed_video"
+        ref="stubbed_video"
+        class="is-flex is-flex-direction-column is-justify-content-center is-align-items-center">
+        <svg
+          version="1.1"
+          xmlns="http://www.w3.org/2000/svg"
+          width="96"
+          height="96">
+          <path
+            v-if="!playing_ctx"
+            d="M 16 16 V 80 L 80 48 Z"
+            fill="white"/>
+        </svg>
+      </div>
+    </div>
     <div
       id="timing_container">
       <img
@@ -334,6 +353,17 @@ export default {
   position: absolute;
 }
 #timing_timeline {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+}
+#video_container {
+  width: 100%;
+  position: relative;
+}
+#stubbed_video {
+  top: 0px;
+  left: 0px;
   width: 100%;
   height: 100%;
   position: absolute;
