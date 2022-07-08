@@ -7,6 +7,7 @@
       <div
         v-if="media_type == 'VIDEO'">
         <MediaTagVideo
+          ref="tagger"
           :selection_colour="store.get_my_colour()"
           @advanced="advanced_by_media"
           :highlights="highlights_for_media"
@@ -17,6 +18,7 @@
       <div
         v-else-if="media_type == 'AUDIO'">
         <MediaTagAudio
+          ref="tagger"
           :selection_colour="store.get_my_colour()"
           @advanced="advanced_by_media"
           :highlights="highlights_for_media"
@@ -27,6 +29,7 @@
       <div
         v-else-if="media_type == 'IMAGE'">
         <MediaTagImage
+          ref="tagger"
           :selection_colour="store.get_my_colour()"
           :highlights="highlights_for_media"
           @selected="selected_by_media"
@@ -35,6 +38,7 @@
       <div
         v-else-if="media_type == 'TEXT'">
         <MediaTagText
+          ref="tagger"
           :selection_colour="store.get_my_colour()"
           :highlights="highlights_for_media"
           @selected="selected_by_media"
@@ -66,6 +70,7 @@
         v-if="media_type == 'TEXT' || media_type == 'IMAGE'">
         <TagChooserStatic
           :selection="selection_for_tagchooser"
+          @cleared="cleared_by_tagchooser"
           :media_handle="handle"/>
       </div>
       <hr/>
@@ -138,6 +143,10 @@ export default {
     // we ourselves want a tagging list highlighted, propagate to media
     highlight_taggings : function(l) {
       this.highlights_for_media = l;
+    },
+    // the tagchooser cleared the selection
+    cleared_by_tagchooser : function() {
+      this.$refs.tagger.clear_selection();
     },
   },
   computed : {

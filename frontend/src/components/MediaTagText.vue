@@ -101,6 +101,10 @@ export default {
     },
   },
   methods : {
+    clear_selection() {
+      this.selection = undefined;
+      this.redraw();
+    },
     redraw() {
       //this.$refs.actual_text.value = this.original_text;
       let output = '';

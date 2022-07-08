@@ -190,6 +190,11 @@ export default {
     });
   },
   methods : {
+    // clear the selection
+    clear_selection() {
+      this.display.selection = null;
+      this.redraw();
+    },
     // when the image is loaded, resize the containing div so that
     // it (and the canvas) fit
     image_loaded : function() {

@@ -98,6 +98,9 @@ export default {
       selected_to : undefined,
     };
   },
+  emits : [
+    'cleared',
+  ],
   props : {
     selection : {
       type : Object,
@@ -156,6 +159,7 @@ export default {
       this.update_selected(undefined);
       this.chosenTags = [];
       this.comment = '';
+      this.$emit('cleared', undefined);
     },
     async commit() {
       let tag_handles = [];
