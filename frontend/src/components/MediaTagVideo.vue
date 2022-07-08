@@ -113,22 +113,26 @@ export default {
         });
         this.display.highlights = highlights;
 
-        // if there is a first, jump towards it
-        if (new_highlights && new_highlights.taggings && new_highlights.taggings.length) {
-          let first = new_highlights.taggings[0].position;
-          switch (first.what) {
-            case 'all':
-                break;
+        let jump_target = undefined;
+
+        if (emp.length) {
+          jump_target = new_highlights.taggings.find((h) => h.handle == emp[0]);
+        } else {
+          if (new_highlights.taggings.length) {
+            jump_target = new_highlights.taggings[0];
+          }
+        }
+
+        if (jump_target) {
+          switch (jump_target.position.what) {
             case 'point':
-                this.set_position(parseFloat(first.at));
+                this.set_position(parseFloat(jump_target.position.at));
                 break;
             case 'range':
-                this.set_position(parseFloat(first.from));
-                break;
-            default:
-                console.log(`error: don't know how to handle highlight of type "${first.what}"`);
+                this.set_position(parseFloat(jump_target.position.from));
                 break;
           }
+          this.$refs.actual_video.play();
         }
 
         this.redraw();
