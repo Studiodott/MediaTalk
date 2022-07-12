@@ -1,88 +1,90 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
   <div
-    class="box">
+    class="box columns">
     <div
-      class="is-flex is-flex-direction-row is-justify-content-space-between">
-      <o-field
-        label="Show only">
-        <o-checkbox
-          v-for="mt in available_media_types"
-          v-model="chosen_media_types"
-          :native-value="mt">
-          {{ mt.toLowerCase() }}
-        </o-checkbox>
-      </o-field>
-      <o-button
-        variant="info"
-        @click="show_link">
-        Share this filter
-      </o-button>
-    </div>
-    <o-field
-      label="And only tags">
-      <o-inputitems
-        v-model="chosen_tags"
-        :data="filtered_tags"
-        autocomplete
-        :allow-new="false"
-        :open-on-focus="true"
-        field="name"
-        @typing="get_filtered_tags"/>
-    </o-field>
-    <o-field
-      label="Tagged by">
-      <o-inputitems
-        v-model="chosen_users"
-        :data="filtered_users"
-        autocomplete
-        :allow-new="false"
-        :open-on-focus="true"
-        field="key"
-        @typing="get_filtered_users"/>
-    </o-field>
-    <div
-      class="is-flex is-flex-direction-row is-justify-content-end">
-      <o-button
-        variant="primary"
-        @click="update">
-        Apply
-      </o-button>
-    </div>
-
-    <o-modal
-      :active="showing_link"
-      contentClass="modal-card"
-      @close="showing_link = false">
-      <header
-        class="modal-card-head">
-        <p
-          class="modal-card-title">
-          Share this report
-        </p>
-      </header>
-      <section
-        class="modal-card-body">
-        <div
-          class="field">
-          <p>
-            Everyone with access can see this selection with this link
-          </p>
-          <div
-            class="control">
-            <input class="input" type="text" :value="current_link"/>
-          </div>
-        </div>
-      </section>
-      <footer
-        class="modal-card-foot">
+      class="column">
+      <div
+        class="is-flex is-flex-direction-row is-justify-content-space-between">
+        <o-field
+          label="Show only">
+          <o-checkbox
+            v-for="mt in available_media_types"
+            v-model="chosen_media_types"
+            :native-value="mt">
+            {{ mt.toLowerCase() }}
+          </o-checkbox>
+        </o-field>
         <o-button
-          @click="showing_link = false">
-          Got it!
+          variant="info"
+          @click="show_link">
+          Share this filter
         </o-button>
-      </footer>
-    </o-modal>
+      </div>
+      <o-field
+        label="And only tags">
+        <o-inputitems
+          v-model="chosen_tags"
+          :data="filtered_tags"
+          autocomplete
+          :allow-new="false"
+          :open-on-focus="true"
+          field="name"
+          @typing="get_filtered_tags"/>
+      </o-field>
+      <o-field
+        label="Tagged by">
+        <o-inputitems
+          v-model="chosen_users"
+          :data="filtered_users"
+          autocomplete
+          :allow-new="false"
+          :open-on-focus="true"
+          field="key"
+          @typing="get_filtered_users"/>
+      </o-field>
+      <div
+        class="is-flex is-flex-direction-row is-justify-content-end">
+        <o-button
+          variant="primary"
+          @click="update">
+          Apply
+        </o-button>
+      </div>
 
+      <o-modal
+        :active="showing_link"
+        contentClass="modal-card"
+        @close="showing_link = false">
+        <header
+          class="modal-card-head">
+          <p
+            class="modal-card-title">
+            Share this report
+          </p>
+        </header>
+        <section
+          class="modal-card-body">
+          <div
+            class="field">
+            <p>
+              Everyone with access can see this selection with this link
+            </p>
+            <div
+              class="control">
+              <input class="input" type="text" :value="current_link"/>
+            </div>
+          </div>
+        </section>
+        <footer
+          class="modal-card-foot">
+          <o-button
+            @click="showing_link = false">
+            Got it!
+          </o-button>
+        </footer>
+      </o-modal>
+    </div>
   </div>
 </template>
 
