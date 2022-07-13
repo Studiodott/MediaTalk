@@ -73,6 +73,8 @@ export default {
     'advanced'
   ],
   setup : function() {
+    const store = Store();
+    return { store };
   },
   watch : {
     // upon highlights change, flush out the old display list and rebuild it
@@ -203,13 +205,30 @@ export default {
         event.target.pause();
       }
     });
+    this.$refs.stubbed_video.addEventListener('click', (e) => {
+      if (this.$refs.actual_video.paused) {
+        this.$refs.actual_video.play();
+      } else {
+        this.$refs.actual_video.pause();
+      }
+    });
     // timeline clicks update the video position
     this.$refs.timing_timeline.addEventListener('click', (e) => {
       let when = this.timeline_resolve_click(event.clientX, event.clientY);
       this.set_position(when);
     });
+
+    // follow volume changes
+    this.update_volume(this.store.runtime.audio_volume);
+    watch(this.store.runtime, (rt) => {
+      this.update_volume(rt.audio_volume);
+    });
   },
   methods : {
+    // update volume
+    update_volume : function(pct) {
+      this.$refs.actual_video.volume = pct / 100.0;
+    },
     // when the image is loaded, resize the containing div so that
     // it (and the canvas) fit
     image_loaded : function() {
