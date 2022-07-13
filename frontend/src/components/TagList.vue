@@ -96,14 +96,17 @@
         </div> <!-- tagging-box -->
 
         <!-- general options for this tag -->
-        <o-button
-          size="small"
-          class="is-fullwidth p-2"
-          icon-left="trash-can"
-          variant="danger"
-          @click="remove_tag(tag_handle)">
-          remove entire tag
-        </o-button>
+        <div
+          class="content field is-flex is-flex-direction-row is-justify-content-flex-start p-2">
+          <o-button
+            size="small"
+            class="p-2"
+            icon-left="trash-can"
+            variant="danger"
+            @click="remove_tag(tag_handle)">
+            remove entire tag
+          </o-button>
+        </div>
 
       </div> <!-- card content -->
     </o-collapse>
