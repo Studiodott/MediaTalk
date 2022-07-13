@@ -113,6 +113,7 @@
 <script>
 import { Store } from '@/store/store.js';
 import * as timeago from 'timeago.js';
+import { nextTick } from 'vue';
 
 export default {
   name : 'TagList',
@@ -136,6 +137,15 @@ export default {
   ],
   mounted() {
     console.log(`taglist media_handle=${this.media_handle} collection=${this.collection}`);
+    nextTick(() => {
+      let all_taggings = undefined;
+      if (this.collection == 'live') {
+        all_taggings = this.store.get_taggings_for_media(this.media_handle);
+      } else {
+        all_taggings = this.store.search_results_get_taggings_for_media(this.media_handle);
+      }
+      this.highlight(all_taggings, []);
+    });
   },
   methods : {
     select_taggings : function(taggings) {
