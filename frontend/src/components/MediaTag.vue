@@ -57,14 +57,6 @@
             @selected="selected_by_tagchooser"
             :media_handle="handle"/>
         </div>
-        <div
-          class="box">
-          <p>prev:</p>
-          <TagChooserTimeline
-            :advance="advance_for_tagchooser"
-            @selected="selected_by_tagchooser"
-            :media_handle="handle"/>
-        </div>
       </div>
       <div
         v-if="media_type == 'TEXT' || media_type == 'IMAGE'">
