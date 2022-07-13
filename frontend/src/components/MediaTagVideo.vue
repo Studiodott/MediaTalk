@@ -139,7 +139,10 @@ export default {
                 this.set_position(parseFloat(jump_target.position.from));
                 break;
           }
-          this.$refs.actual_video.play();
+          // this was subject to some discussion, should (when showing highlights)
+          // the player start playing at the first relevant highlight?
+          // in the end, it was decided to pause at that point
+          this.$refs.actual_video.pause();
         }
 
         this.redraw();

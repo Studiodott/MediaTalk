@@ -149,7 +149,10 @@ export default {
                 this.set_position(parseFloat(jump_target.position.from));
                 break;
           }
-          this.$refs.actual_audio.play();
+          // this was subject to some discussion, should (when showing highlights)
+          // the player start playing at the first relevant highlight?
+          // in the end, it was decided to pause at that point
+          this.$refs.actual_audio.pause();
         }
 
         this.redraw();
@@ -168,6 +171,13 @@ export default {
 
         switch (new_selection.what) {
           case 'all':
+              highlights.push({
+                'what' : 'range',
+                'from' : this.delogicalize_timestamp(0.0),
+                'to' : this.delogicalize_timestamp(this.duration),
+                'colour' : h.colour,
+                'emphasized' : emp.length ? emp.includes(h.handle) : true,
+              });
               break;
           case 'point':
               this.display.selection = {
@@ -229,6 +239,7 @@ export default {
         audio.pause();
       }
     });
+
     // timeline clicks update the video position
     this.$refs.timing_timeline.addEventListener('click', (e) => {
       let when = this.timeline_resolve_click(event.clientX, event.clientY);

@@ -232,7 +232,6 @@ export default {
     // update volume
     update_volume : function(pct) {
       this.$refs.actual_audio.volume = pct / 100.0;
-      console.log(`setting vol to ${pct / 100.0}`);
     },
     // when the image is loaded, resize the containing div so that
     // it (and the canvas) fit

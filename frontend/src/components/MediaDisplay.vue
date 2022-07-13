@@ -4,12 +4,12 @@
     class="box">
     <div
       class="columns">
-
       <div
         class="column is-flex is-flex-direction-column is-align-items-stretch">
         <div
           v-if="media_type == 'VIDEO'">
-          <MediaDisplayVideo
+          <MediaTagVideo
+            ref="tagger"
             :selection_colour="store.get_my_colour()"
             @advanced="advanced_by_media"
             :highlights="highlights_for_media"
@@ -19,7 +19,8 @@
         </div>
         <div
           v-else-if="media_type == 'AUDIO'">
-          <MediaDisplayAudio
+          <MediaTagAudio
+            ref="tagger"
             :selection_colour="store.get_my_colour()"
             @advanced="advanced_by_media"
             :highlights="highlights_for_media"
@@ -29,7 +30,8 @@
         </div>
         <div
           v-else-if="media_type == 'IMAGE'">
-          <MediaDisplayImage
+          <MediaTagImage
+            ref="tagger"
             :selection_colour="store.get_my_colour()"
             :highlights="highlights_for_media"
             @selected="selected_by_media"
@@ -37,14 +39,14 @@
         </div>
         <div
           v-else-if="media_type == 'TEXT'">
-          <MediaDisplayText
+          <MediaTagText
+            ref="tagger"
             :selection_colour="store.get_my_colour()"
             :highlights="highlights_for_media"
             @selected="selected_by_media"
             v-bind:src="url_original"/>
         </div>
       </div>
-
     </div>
     <div
       class="columns">
@@ -65,10 +67,10 @@ import { Store } from '@/store/store.js';
 import TagList from '@/components/TagList.vue';
 import TagChooserStatic from '@/components/TagChooserStatic.vue';
 import TagChooserTimeline from '@/components/TagChooserTimeline.vue';
-import MediaDisplayText from '@/components/MediaDisplayText.vue';
-import MediaDisplayVideo from '@/components/MediaDisplayVideo.vue';
-import MediaDisplayAudio from '@/components/MediaDisplayAudio.vue';
-import MediaDisplayImage from '@/components/MediaDisplayImage.vue';
+import MediaTagText from '@/components/MediaTagText.vue';
+import MediaTagVideo from '@/components/MediaTagVideo.vue';
+import MediaTagAudio from '@/components/MediaTagAudio.vue';
+import MediaTagImage from '@/components/MediaTagImage.vue';
 import PositionDisplay from '@/components/PositionDisplay.vue';
 
 export default {
@@ -85,10 +87,10 @@ export default {
     TagList,
     TagChooserStatic,
     TagChooserTimeline,
-    MediaDisplayText,
-    MediaDisplayVideo,
-    MediaDisplayAudio,
-    MediaDisplayImage,
+    MediaTagText,
+    MediaTagVideo,
+    MediaTagAudio,
+    MediaTagImage,
     PositionDisplay,
   },
   setup : function() {
@@ -110,7 +112,6 @@ export default {
     },
     // the media called a selection, propagate to tagchooser
     selected_by_media(selection) {
-      console.log(selection);
       this.selection_for_tagchooser = selection;
     },
     // the tagchooser called a selection, propagate to media
@@ -118,9 +119,8 @@ export default {
       this.selection_for_media = selection;
     },
     // we ourselves want a tagging list highlighted, propagate to media
-    highlight_taggings : function(t) {
-      console.dir(t);
-      this.highlights_for_media = t;
+    highlight_taggings : function(l) {
+      this.highlights_for_media = l;
     },
   },
   computed : {
