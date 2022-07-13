@@ -61,17 +61,22 @@ export default {
         };
         */
         // TODO while point doesn't work here
+        let a = sel.anchorOffset + this.regions[first_region_seen].offset;
+        let b = sel.focusOffset + this.regions[last_region_seen].offset;
         this.selection = {
           what : 'range',
-          from : sel.anchorOffset + this.regions[first_region_seen].offset,
-          to : sel.focusOffset + this.regions[last_region_seen].offset,
+          from : (a < b) ? a : b,
+          to : (a < b) ? b : a,
         };
         this.$emit('selected', this.selection);
       } else if (sel.type == 'Range') {
+        let a = sel.anchorOffset + this.regions[first_region_seen].offset;
+        let b = sel.focusOffset + this.regions[last_region_seen].offset;
+
         this.selection = {
           what : 'range',
-          from : sel.anchorOffset + this.regions[first_region_seen].offset,
-          to : sel.focusOffset + this.regions[last_region_seen].offset,
+          from : (a < b) ? a : b,
+          to : (a < b) ? b : a,
         };
         this.$emit('selected', this.selection);
       }
