@@ -193,6 +193,8 @@ export default {
         if (new_selection.what == 'range') {
           if (new_selection.from && new_selection.to) {
             this.$refs.actual_audio.pause();
+          } else {
+            this.$refs.actual_audio.play();
           }
         }
 
