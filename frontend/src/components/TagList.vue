@@ -6,7 +6,7 @@
       animation="slide"
       v-for="(taggings, tag_handle, tag_index) in getTaggingsForMedia"
       :key="tag_index"
-      @open="collapse_open_on = tag_index; highlight(taggings, [])"
+      @open="collapse_open_on = tag_index; highlight(taggings, []); tag_removal_safety[tag_handle] = true;"
       @close="highlight([], [])"
       :open="collapse_open_on == tag_index">
       <template #trigger="props">
@@ -97,10 +97,11 @@
 
         <!-- general options for this tag -->
         <div
-          class="content field is-flex is-flex-direction-row is-justify-content-flex-start p-2">
+          class="content field is-flex is-flex-direction-row is-justify-content-flex-end p-2">
           <o-button
             size="small"
             class="p-2"
+            :class="tag_removal_safety[tag_handle] == true ? 'is-light' : ''"
             icon-left="trash-can"
             variant="danger"
             @click="remove_tag(tag_handle)">
@@ -122,6 +123,7 @@ export default {
   data : function() {
     return {
       collapse_open_on : null,
+      tag_removal_safety : {},
     };
   },
   components : {
@@ -172,6 +174,10 @@ export default {
       this.store.remove_tagging(handle);
     },
     remove_tag : function(handle) {
+      if (this.tag_removal_safety[handle] == true) {
+        this.tag_removal_safety[handle] = false;
+        return;
+      }
       this.store.remove_tag(handle);
     },
 
