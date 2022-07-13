@@ -228,7 +228,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 #actual_text {
   overflow-y: scroll;
   white-space: pre-wrap;

@@ -188,7 +188,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 #actual_text {
   white-space: pre-wrap;
 }
