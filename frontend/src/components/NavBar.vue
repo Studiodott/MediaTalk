@@ -10,9 +10,9 @@
         class="navbar-item"
         href="/">
         <img
-          src="https://api.lorem.space/image/furniture?w=112&h=28"
-          width="112"
-          height="38">
+          src="@/assets/citystory.svg"
+          width="96"
+          height="64">
       </a>
       <a
         role="button"
