@@ -1,52 +1,60 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
   <div
-    class="box columns">
+    class="box">
     <div
-      class="column is-two-thirds is-flex is-flex-direction-column is-align-items-stretch">
+      class="columns">
+
       <div
-        v-if="media_type == 'VIDEO'">
-        <MediaDisplayVideo
-          :selection_colour="store.get_my_colour()"
-          @advanced="advanced_by_media"
-          :highlights="highlights_for_media"
-          :selection="selection_for_media"
-          :src="url_original"
-          :waveform="url_description"/>
+        class="column is-flex is-flex-direction-column is-align-items-stretch">
+        <div
+          v-if="media_type == 'VIDEO'">
+          <MediaDisplayVideo
+            :selection_colour="store.get_my_colour()"
+            @advanced="advanced_by_media"
+            :highlights="highlights_for_media"
+            :selection="selection_for_media"
+            :src="url_original"
+            :waveform="url_description"/>
+        </div>
+        <div
+          v-else-if="media_type == 'AUDIO'">
+          <MediaDisplayAudio
+            :selection_colour="store.get_my_colour()"
+            @advanced="advanced_by_media"
+            :highlights="highlights_for_media"
+            :selection="selection_for_media"
+            :src="url_original"
+            :waveform="url_description"/>
+        </div>
+        <div
+          v-else-if="media_type == 'IMAGE'">
+          <MediaDisplayImage
+            :selection_colour="store.get_my_colour()"
+            :highlights="highlights_for_media"
+            @selected="selected_by_media"
+            v-bind:src="url_original"/>
+        </div>
+        <div
+          v-else-if="media_type == 'TEXT'">
+          <MediaDisplayText
+            :selection_colour="store.get_my_colour()"
+            :highlights="highlights_for_media"
+            @selected="selected_by_media"
+            v-bind:src="url_original"/>
+        </div>
       </div>
-      <div
-        v-else-if="media_type == 'AUDIO'">
-        <MediaDisplayAudio
-          :selection_colour="store.get_my_colour()"
-          @advanced="advanced_by_media"
-          :highlights="highlights_for_media"
-          :selection="selection_for_media"
-          :src="url_original"
-          :waveform="url_description"/>
-      </div>
-      <div
-        v-else-if="media_type == 'IMAGE'">
-        <MediaDisplayImage
-          :selection_colour="store.get_my_colour()"
-          :highlights="highlights_for_media"
-          @selected="selected_by_media"
-          v-bind:src="url_original"/>
-      </div>
-      <div
-        v-else-if="media_type == 'TEXT'">
-        <MediaDisplayText
-          :selection_colour="store.get_my_colour()"
-          :highlights="highlights_for_media"
-          @selected="selected_by_media"
-          v-bind:src="url_original"/>
-      </div>
+
     </div>
     <div
-      class="column is-one-third">
-      <TagList
-        :media_handle="handle"
-        @select="highlight_taggings"
-        collection="search"/>
+      class="columns">
+      <div
+        class="column">
+        <TagList
+          :media_handle="handle"
+          @select="highlight_taggings"
+          collection="search"/>
+      </div>
     </div>
   </div>
 </template>

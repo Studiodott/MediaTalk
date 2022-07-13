@@ -1,75 +1,83 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
   <div
-    class="box columns">
+    class="box">
     <div
-      class="column is-two-thirds is-flex is-flex-direction-column is-align-items-stretch">
+      class="columns">
       <div
-        v-if="media_type == 'VIDEO'">
-        <MediaTagVideo
-          ref="tagger"
-          :selection_colour="store.get_my_colour()"
-          @advanced="advanced_by_media"
-          :highlights="highlights_for_media"
-          :selection="selection_for_media"
-          :src="url_original"
-          :waveform="url_description"/>
-      </div>
-      <div
-        v-else-if="media_type == 'AUDIO'">
-        <MediaTagAudio
-          ref="tagger"
-          :selection_colour="store.get_my_colour()"
-          @advanced="advanced_by_media"
-          :highlights="highlights_for_media"
-          :selection="selection_for_media"
-          :src="url_original"
-          :waveform="url_description"/>
-      </div>
-      <div
-        v-else-if="media_type == 'IMAGE'">
-        <MediaTagImage
-          ref="tagger"
-          :selection_colour="store.get_my_colour()"
-          :highlights="highlights_for_media"
-          @selected="selected_by_media"
-          v-bind:src="url_original"/>
-      </div>
-      <div
-        v-else-if="media_type == 'TEXT'">
-        <MediaTagText
-          ref="tagger"
-          :selection_colour="store.get_my_colour()"
-          :highlights="highlights_for_media"
-          @selected="selected_by_media"
-          v-bind:src="url_original"/>
-      </div>
-    </div>
-    <div
-      class="column is-one-third is-flex is-flex-direction-column is-justify-content-end">
-      <div
-        v-if="media_type == 'VIDEO' || media_type == 'AUDIO'">
+        class="column is-two-thirds is-flex is-flex-direction-column is-align-items-stretch">
         <div
-          class="box">
-          <p>new:</p>
-          <TagChooserTimelineSimple
-            :advance="advance_for_tagchooser"
-            @selected="selected_by_tagchooser"
-            :media_handle="handle"/>
+          v-if="media_type == 'VIDEO'">
+          <MediaTagVideo
+            ref="tagger"
+            :selection_colour="store.get_my_colour()"
+            @advanced="advanced_by_media"
+            :highlights="highlights_for_media"
+            :selection="selection_for_media"
+            :src="url_original"
+            :waveform="url_description"/>
+        </div>
+        <div
+          v-else-if="media_type == 'AUDIO'">
+          <MediaTagAudio
+            ref="tagger"
+            :selection_colour="store.get_my_colour()"
+            @advanced="advanced_by_media"
+            :highlights="highlights_for_media"
+            :selection="selection_for_media"
+            :src="url_original"
+            :waveform="url_description"/>
+        </div>
+        <div
+          v-else-if="media_type == 'IMAGE'">
+          <MediaTagImage
+            ref="tagger"
+            :selection_colour="store.get_my_colour()"
+            :highlights="highlights_for_media"
+            @selected="selected_by_media"
+            v-bind:src="url_original"/>
+        </div>
+        <div
+          v-else-if="media_type == 'TEXT'">
+          <MediaTagText
+            ref="tagger"
+            :selection_colour="store.get_my_colour()"
+            :highlights="highlights_for_media"
+            @selected="selected_by_media"
+            v-bind:src="url_original"/>
         </div>
       </div>
       <div
-        v-if="media_type == 'TEXT' || media_type == 'IMAGE'">
-        <TagChooserStatic
-          :selection="selection_for_tagchooser"
-          @cleared="cleared_by_tagchooser"
-          :media_handle="handle"/>
+        class="column is-one-third is-flex is-flex-direction-column is-justify-content-end">
+        <div
+          v-if="media_type == 'VIDEO' || media_type == 'AUDIO'">
+          <div
+            class="box">
+            <p>new:</p>
+            <TagChooserTimelineSimple
+              :advance="advance_for_tagchooser"
+              @selected="selected_by_tagchooser"
+              :media_handle="handle"/>
+          </div>
+        </div>
+        <div
+          v-if="media_type == 'TEXT' || media_type == 'IMAGE'">
+          <TagChooserStatic
+            :selection="selection_for_tagchooser"
+            @cleared="cleared_by_tagchooser"
+            :media_handle="handle"/>
+        </div>
       </div>
-      <hr/>
-      <TagList
-        :media_handle="handle"
-        @select="highlight_taggings"
-        collection="live"/>
+    </div>
+    <div
+      class="columns">
+      <div
+        class="column">
+        <TagList
+          :media_handle="handle"
+          @select="highlight_taggings"
+          collection="live"/>
+      </div>
     </div>
   </div>
 </template>
