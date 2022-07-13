@@ -3,9 +3,9 @@
   <div
     class="is-flex is-flex-direction-column is-flex-align-items-stretch">
     <div
+      hidden
       id="video_container">
       <video
-        @load="console.log('LOAD')"
         id="actual_video"
         ref="actual_video">
         <source
@@ -40,6 +40,30 @@
         ref="timing_timeline"
         id="timing_timeline"/>
     </div>
+    <div
+      id="description">
+      <ul>
+        <li
+          v-for="(highlight, highlight_index) in highlights.taggings">
+          <span
+            v-if="highlight.position.what == 'range'">
+            From {{ highlight.position.from }}sec to {{ highlight.position.to }}sec.
+          </span>
+          <span
+            v-if="highlight.position.what == 'point'">
+            At {{ highlight.position.at }}sec
+          </span>
+          <span
+            v-if="highlight.position.what == 'all'">
+            Entire media
+          </span>
+          <span
+            v-if="highlight.comment && highlight.comment.length">
+            Comment: <b>{{ highlight.comment }}</b>
+          </span>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
@@ -50,7 +74,7 @@ import { Store } from '@/store/store.js';
 const FPS = 25;
 
 export default {
-  name : 'MediaTagVideo',
+  name : 'MediaPrintVideo',
   data : function() {
     return {
       duration : undefined,
@@ -73,75 +97,13 @@ export default {
     'advanced'
   ],
   setup : function() {
-    const store = Store();
-    return { store };
   },
   watch : {
     // upon highlights change, flush out the old display list and rebuild it
     // to look like the given highlights but then in pixel coordinates
     highlights : {
       handler : function(new_highlights) {
-        let highlights = [];
-        let emp = new_highlights.emphasis;
-
-        // build up a new list & install it
-        new_highlights.taggings.forEach((h) => {
-          let p = h.position;
-          switch (p.what) {
-            case 'all':
-                highlights.push({
-                  'what' : 'range',
-                  'from' : this.delogicalize_timestamp(0.0),
-                  'to' : this.delogicalize_timestamp(this.duration),
-                  'colour' : h.colour,
-                  'emphasized' : emp.length ? emp.includes(h.handle) : true,
-                });
-                break;
-            case 'point' : 
-                highlights.push({
-                  'what' : 'point',
-                  'at' : this.delogicalize_timestamp(p.at),
-                  'colour' : h.colour,
-                  'emphasized' : emp.length ? emp.includes(h.handle) : true,
-                });
-                break;
-            case 'range' : 
-                highlights.push({
-                  'what' : 'range',
-                  'from' : this.delogicalize_timestamp(p.from),
-                  'to' : this.delogicalize_timestamp(p.to),
-                  'colour' : h.colour,
-                  'emphasized' : emp.length ? emp.includes(h.handle) : true,
-                });
-                break;
-            default:
-                console.log(`error: unknown type of highlight "${p.what}"`);
-          }
-        });
-        this.display.highlights = highlights;
-
-        let jump_target = undefined;
-
-        if (emp.length) {
-          jump_target = new_highlights.taggings.find((h) => h.handle == emp[0]);
-        } else {
-          if (new_highlights.taggings.length) {
-            jump_target = new_highlights.taggings[0];
-          }
-        }
-
-        if (jump_target) {
-          switch (jump_target.position.what) {
-            case 'point':
-                this.set_position(parseFloat(jump_target.position.at));
-                break;
-            case 'range':
-                this.set_position(parseFloat(jump_target.position.from));
-                break;
-          }
-          this.$refs.actual_video.play();
-        }
-
+        this.process_highlights(new_highlights);
         this.redraw();
       },
       deep : false,
@@ -186,13 +148,6 @@ export default {
               break;
         }
 
-        // pause if needs be
-        if (new_selection.what == 'range') {
-          if (new_selection.from && new_selection.to) {
-            this.$refs.actual_video.pause();
-          }
-        }
-
         this.redraw();
       },
       // but we want to see all changes here, might be some timestamp changed
@@ -203,97 +158,58 @@ export default {
     // follow the video player's actions
     this.$refs.actual_video.addEventListener('durationchange', (e) => {
       this.duration = e.target.duration;
-    });
-    this.$refs.actual_video.addEventListener('playing', (e) => {
-      this.started_playing();
-    });
-    this.$refs.actual_video.addEventListener('pause', (e) => {
-      this.stopped_playing();
-    });
-    this.$refs.actual_video.addEventListener('ended', (e) => {
-      this.stopped_playing();
-    });
-    this.$refs.actual_video.addEventListener('error', (e) => {
-      this.stopped_playing();
-    });
-    this.$refs.actual_video.addEventListener('click', (e) => {
-      if (event.target.paused) {
-        event.target.play();
-      } else {
-        event.target.pause();
-      }
-    });
-    this.$refs.stubbed_video.addEventListener('click', (e) => {
-      if (this.$refs.actual_video.paused) {
-        this.$refs.actual_video.play();
-      } else {
-        this.$refs.actual_video.pause();
-      }
-    });
-    // timeline clicks update the video position
-    this.$refs.timing_timeline.addEventListener('click', (e) => {
-      let when = this.timeline_resolve_click(event.clientX, event.clientY);
-      this.set_position(when);
+      this.process_highlights(this.highlights);
+      this.redraw();
     });
 
-    // follow volume changes
-    this.update_volume(this.store.runtime.audio_volume);
-    watch(this.store.runtime, (rt) => {
-      this.update_volume(rt.audio_volume);
+    this.$nextTick(() => {
+      this.process_highlights(this.highlights);
+      this.redraw();
     });
   },
   methods : {
-    // update volume
-    update_volume : function(pct) {
-      this.$refs.actual_video.volume = pct / 100.0;
-    },
-    // when the image is loaded, resize the containing div so that
-    // it (and the canvas) fit
-    image_loaded : function() {
-      let waveform = this.$refs.timing_waveform;
-      let timeline = this.$refs.timing_timeline;
-      timeline.width = waveform.clientWidth;
-      timeline.height = waveform.clientHeight;
-    },
-    // set the video's position, and fire off the updating handler
-    set_position : function(when) {
-      this.$refs.actual_video.currentTime = when;
-      this.update_position();
-    },
-    // upon position update, fire off the advanced event and redraw
-    update_position : function() {
-      let when = this.$refs.actual_video.currentTime;
-      this.$emit('advanced', {
-        'what' : 'point',
-        'at' : when,
+    // given new highlights, distill them into a list the rest
+    // of the code can visualize
+    process_highlights : function(new_highlights) {
+      let highlights = [];
+      let emp = new_highlights.emphasis;
+
+      // build up a new list & install it
+      new_highlights.taggings.forEach((h) => {
+        let p = h.position;
+        switch (p.what) {
+          case 'all':
+              highlights.push({
+                'what' : 'range',
+                'from' : this.delogicalize_timestamp(0),
+                'to' : this.delogicalize_timestamp(this.duration),
+                'colour' : h.colour,
+                'emphasized' : emp.length ? emp.includes(h.handle) : true,
+              });
+              break;
+          case 'point' : 
+              highlights.push({
+                'what' : 'point',
+                'at' : this.delogicalize_timestamp(p.at),
+                'colour' : h.colour,
+                'emphasized' : emp.length ? emp.includes(h.handle) : true,
+              });
+              break;
+          case 'range' : 
+              highlights.push({
+                'what' : 'range',
+                'from' : this.delogicalize_timestamp(p.from),
+                'to' : this.delogicalize_timestamp(p.to),
+                'colour' : h.colour,
+                'emphasized' : emp.length ? emp.includes(h.handle) : true,
+              });
+              break;
+          default:
+              console.log(`error: unknown type of highlight "${p.what}"`);
+        }
       });
-      this.redraw();
-    },
-    // when we start playing, we start an interval timer to update the
-    // position at FPS
-    started_playing : function() {
-      // clear any running context
-      if (this.playing_ctx)
-        clearInterval(this.playing_ctx);
-      this.playing_ctx = setInterval(() => {
-        this.update_position();
-      }, 1000 / FPS);
-    },
-    // and when we stop playing, we stop the interval timer
-    stopped_playing : function() {
-      clearInterval(this.playing_ctx);
-      this.playing_ctx = undefined;
-    },
-    // turn a click event's clientX/Y on the timeline into a timestamp
-    timeline_resolve_click : function(mouse_x, mouse_y) {
-      if (this.duration == undefined) {
-        // we have no known duration, do nothing yet
-        return;
-      }
-      let canvas_pos = this.$refs.timing_timeline.getBoundingClientRect();
-      mouse_x -= canvas_pos.left;
-      mouse_y -= canvas_pos.top;
-      return (mouse_x / canvas_pos.width) * this.duration;
+      this.display.highlights = highlights;
+
     },
     // translate a timestamp to a pixel offset in the timeline
     delogicalize_timestamp : function(ts) {
@@ -372,14 +288,6 @@ export default {
         }
       }
 
-      // the current position
-      ctx.lineWidth = 2;
-
-      draw({
-        what : 'point',
-        colour : this.selection_colour,
-        at : pos,
-      });
     },
   },
 };
@@ -404,6 +312,7 @@ export default {
 #video_container {
   width: 100%;
   position: relative;
+  display: hidden;
 }
 #stubbed_video {
   top: 0px;

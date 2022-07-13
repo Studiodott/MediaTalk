@@ -87,6 +87,13 @@ export default {
           let p = h.position;
           switch (p.what) {
             case 'all':
+                highlights.push({
+                  'what' : 'range',
+                  'from' : this.delogicalize_timestamp(0.0),
+                  'to' : this.delogicalize_timestamp(this.duration),
+                  'colour' : h.colour,
+                  'emphasized' : emp.length ? emp.includes(h.handle) : true,
+                });
                 break;
             case 'point' : 
                 highlights.push({

@@ -1,7 +1,7 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
   <div
-    class="is-flex is-flex-direction-column is-align-items-center">
+    class="is-flex is-flex-direction-column is-align-items-stretch">
     <audio
       id="actual_audio"
       ref="actual_audio">
@@ -9,35 +9,6 @@
         v-bind:src="src">
       No browser support for audio :-(
     </audio>
-    <div
-      id="stubbed_video"
-      ref="stubbed_video"
-      class="is-flex is-flex-direction-row is-justify-content-center">
-    <svg
-      version="1.1"
-      xmlns="http://www.w3.org/2000/svg"
-      width="96"
-      height="96">
-      <path
-        v-if="!playing_ctx"
-        d="M 16 16 V 80 L 80 48 Z"
-        fill="white"/>
-      <rect
-        v-if="playing_ctx"
-        style="fill: white"
-        x="16"
-        y="16"
-        width="21"
-        height="64"/>
-      <rect
-        v-if="playing_ctx"
-        style="fill: white"
-        x="58"
-        y="16"
-        width="21"
-        height="64"/>
-    </svg>
-    </div>
     <div
       id="timing_container">
       <img
@@ -50,6 +21,30 @@
         ref="timing_timeline"
         id="timing_timeline"/>
     </div>
+    <div
+      id="description">
+      <ul>
+        <li
+          v-for="(highlight, highlight_index) in highlights.taggings">
+          <span
+            v-if="highlight.position.what == 'range'">
+            From {{ highlight.position.from }}sec to {{ highlight.position.to }}sec.
+          </span>
+          <span
+            v-if="highlight.position.what == 'point'">
+            At {{ highlight.position.at }}sec
+          </span>
+          <span
+            v-if="highlight.position.what == 'all'">
+            Entire media
+          </span>
+          <span
+            v-if="highlight.comment && highlight.comment.length">
+            Comment: <b>{{ highlight.comment }}</b>
+          </span>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
@@ -60,7 +55,7 @@ import { Store } from '@/store/store.js';
 const FPS = 25;
 
 export default {
-  name : 'MediaDisplayAudio',
+  name : 'MediaPrintAudio',
   data : function() {
     return {
       duration : undefined,
@@ -83,71 +78,13 @@ export default {
     'advanced'
   ],
   setup : function() {
-    const store = Store();
-    return { store };
   },
   watch : {
     // upon highlights change, flush out the old display list and rebuild it
     // to look like the given highlights but then in pixel coordinates
     highlights : {
       handler : function(new_highlights) {
-        let highlights = [];
-        let emp = new_highlights.emphasis;
-
-        // build up a new list & install it
-        new_highlights.taggings.forEach((h) => {
-          let p = h.position;
-          switch (p.what) {
-            case 'all':
-                highlights.push({
-                  'what' : 'range',
-                  'from' : this.delogicalize_timestamp(0.0),
-                  'to' : this.delogicalize_timestamp(this.duration),
-                  'colour' : h.colour,
-                  'emphasized' : emp.length ? emp.includes(h.handle) : true,
-                });
-                break;
-            case 'point' : 
-                highlights.push({
-                  'what' : 'point',
-                  'at' : this.delogicalize_timestamp(p.at),
-                  'colour' : h.colour,
-                  'emphasized' : emp.length ? emp.includes(h.handle) : true,
-                });
-                break;
-            case 'range' : 
-                highlights.push({
-                  'what' : 'range',
-                  'from' : this.delogicalize_timestamp(p.from),
-                  'to' : this.delogicalize_timestamp(p.to),
-                  'colour' : h.colour,
-                  'emphasized' : emp.length ? emp.includes(h.handle) : true,
-                });
-                break;
-            default:
-                console.log(`error: unknown type of highlight "${p.what}"`);
-          }
-        });
-        this.display.highlights = highlights;
-
-        // if there is a first, jump towards it
-        if (new_highlights && new_highlights.taggings && new_highlights.taggings.length) {
-          let first = new_highlights.taggings[0].position;
-          switch (first.what) {
-            case 'all':
-                break;
-            case 'point':
-                this.set_position(parseFloat(first.at));
-                break;
-            case 'range':
-                this.set_position(parseFloat(first.from));
-                break;
-            default:
-                console.log(`error: don't know how to handle highlight of type "${first.what}"`);
-                break;
-          }
-        }
-
+        this.process_highlights(new_highlights);
         this.redraw();
       },
       deep : false,
@@ -195,40 +132,59 @@ export default {
     // follow the video player's actions
     this.$refs.actual_audio.addEventListener('durationchange', (e) => {
       this.duration = e.target.duration;
-    });
-    this.$refs.actual_audio.addEventListener('playing', (e) => {
-      this.started_playing();
-    });
-    this.$refs.actual_audio.addEventListener('pause', (e) => {
-      this.stopped_playing();
-    });
-    this.$refs.actual_audio.addEventListener('ended', (e) => {
-      this.stopped_playing();
-    });
-    this.$refs.actual_audio.addEventListener('error', (e) => {
-      this.stopped_playing();
-    });
-    this.$refs.stubbed_video.addEventListener('click', (e) => {
-      let audio = this.$refs.actual_audio;
-      if (audio.paused) {
-        audio.play();
-      } else {
-        audio.pause();
-      }
-    });
-    // timeline clicks update the video position
-    this.$refs.timing_timeline.addEventListener('click', (e) => {
-      let when = this.timeline_resolve_click(event.clientX, event.clientY);
-      this.set_position(when);
+      this.process_highlights(this.highlights);
+      this.redraw();
     });
 
-    // follow volume changes
-    this.update_volume(this.store.runtime.audio_volume);
-    watch(this.store.runtime, (rt) => {
-      this.update_volume(rt.audio_volume);
+    this.$nextTick(() => {
+      this.process_highlights(this.highlights);
+      this.redraw();
     });
   },
   methods : {
+    // given new highlights, distill them into a list the rest
+    // of the code can visualize
+    process_highlights : function(new_highlights) {
+      let highlights = [];
+      let emp = new_highlights.emphasis;
+
+      // build up a new list & install it
+      new_highlights.taggings.forEach((h) => {
+        let p = h.position;
+        switch (p.what) {
+          case 'all':
+              highlights.push({
+                'what' : 'range',
+                'from' : this.delogicalize_timestamp(0.0),
+                'to' : this.delogicalize_timestamp(this.duration),
+                'colour' : h.colour,
+                'emphasized' : emp.length ? emp.includes(h.handle) : true,
+              });
+              break;
+          case 'point' : 
+              highlights.push({
+                'what' : 'point',
+                'at' : this.delogicalize_timestamp(p.at),
+                'colour' : h.colour,
+                'emphasized' : emp.length ? emp.includes(h.handle) : true,
+              });
+              break;
+          case 'range' : 
+              highlights.push({
+                'what' : 'range',
+                'from' : this.delogicalize_timestamp(p.from),
+                'to' : this.delogicalize_timestamp(p.to),
+                'colour' : h.colour,
+                'emphasized' : emp.length ? emp.includes(h.handle) : true,
+              });
+              break;
+          default:
+              console.log(`error: unknown type of highlight "${p.what}"`);
+        }
+      });
+      this.display.highlights = highlights;
+
+    },
     // update volume
     update_volume : function(pct) {
       this.$refs.actual_audio.volume = pct / 100.0;
@@ -359,14 +315,6 @@ export default {
         }
       }
 
-      // the current position
-      ctx.lineWidth = 2;
-
-      draw({
-        what : 'point',
-        colour : this.selection_colour,
-        at : pos,
-      });
     },
   },
 };

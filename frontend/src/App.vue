@@ -57,14 +57,21 @@
               label="Reporting">
               <FilterChooser
                 :filter_string="filter_string"
+                @set_printable="set_report_printable"
                 class="column is-full mb-6"
                 />
-              <MediaDisplay
+              <MediaPrint
+                v-if="report_printable"
                 class="column is-full mb-6"
                 v-for="(media, media_index) in store.search_results.media"
                 :key="media_index"
                 v-bind="media"/>
-
+              <MediaDisplay
+                v-if="!report_printable"
+                class="column is-full mb-6"
+                v-for="(media, media_index) in store.search_results.media"
+                :key="media_index"
+                v-bind="media"/>
             </o-tab-item>
           </o-tabs>
         </div>
@@ -82,6 +89,7 @@ import { api_target } from '@/config.js';
 import Test from "./components/Test.vue";
 import MediaTag from "./components/MediaTag.vue";
 import MediaDisplay from "./components/MediaDisplay.vue";
+import MediaPrint from "./components/MediaPrint.vue";
 import FilterChooser from '@/components/FilterChooser.vue';
 import NavBar from '@/components/NavBar.vue';
 
@@ -94,12 +102,14 @@ export default {
     Test,
     MediaTag,
     MediaDisplay,
+    MediaPrint,
     FilterChooser,
     NavBar,
   },
   data : function() {
     return {
       active_tab : "tagging",
+      report_printable : false,
       filter_string : '',
       boon : this.store.boon,
       auth : {
@@ -119,6 +129,10 @@ export default {
     }
   },
   methods : {
+    set_report_printable : function(p) {
+      console.log(`printable was=${this.report_printable} is=${p}`);
+      this.report_printable = p;
+    },
     process_hash : function() {
       let h = location.hash;
       if (h && h.length) {

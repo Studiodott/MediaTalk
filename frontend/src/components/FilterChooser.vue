@@ -43,6 +43,13 @@
           field="key"
           @typing="get_filtered_users"/>
       </o-field>
+      <o-field>
+        <o-switch
+          @input="$emit('set_printable', !printable)"
+          v-model="printable">
+          Printable
+        </o-switch>
+      </o-field>
       <div
         class="is-flex is-flex-direction-row is-justify-content-end">
         <o-button
@@ -104,10 +111,14 @@ export default {
       filtered_tags : this.store.live.tags,
       chosen_users : [],
       filtered_users : this.store.live.users,
+      printable : false,
       showing_link : false,
       current_link : '',
     };
   },
+  emits : [
+    'set_printable',
+  ],
   props : [
     'filter_string',
   ],
@@ -140,6 +151,10 @@ export default {
                 let u = this.store.get_user(v);
                 users.push(u);
                 break;
+            case 'p':
+                this.printable = v == 'true';
+                this.$emit('set_printable', this.printable);
+                break;
             default:
                 console.log(`error; don't know filtering argument ${k}`);
                 break;
@@ -171,6 +186,7 @@ export default {
       out = out.concat(this.chosen_media_types.map((mt) => `mt${FILTER_STRING_EQ}${mt}`));
       out = out.concat(this.chosen_tags.map((t) => `t${FILTER_STRING_EQ}${t.handle}`));
       out = out.concat(this.chosen_users.map((u) => `u${FILTER_STRING_EQ}${u.handle}`));
+      out.push(`p${FILTER_STRING_EQ}${this.printable ? 'true' : 'false'}`);
       return out.join(FILTER_STRING_SEP);
     },
     show_link : function() {

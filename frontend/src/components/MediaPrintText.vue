@@ -1,17 +1,6 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
-  <!--
-  <textarea
-    readonly
-    autocomplete="off"
-    autocorrect="off"
-    spellcheck="off"
-    ref="actual_text"
-    id="actual_text">
-  </textarea>
-  -->
   <div
-    contenteditable
     ref="actual_text"
     id="actual_text">
   </div>
@@ -19,7 +8,7 @@
 
 <script>
 export default {
-  name : 'MediaTagText',
+  name : 'MediaPrintText',
   data : function() {
     return {
       original_text : '',
@@ -38,50 +27,6 @@ export default {
   setup : function() {
   },
   mounted : async function() {
-    this.$refs.actual_text.spellcheck = false;
-    this.$refs.actual_text.addEventListener('mouseup', (event) => {
-      let sel = document.getSelection();
-      let range = sel.getRangeAt(0);
-      let first_region_seen = undefined;
-      let last_region_seen = undefined;
-      for (let i = 0; i < this.regions.length; i++) {
-        let included = sel.containsNode(this.regions[i].span, true);
-        if (included) {
-          if (first_region_seen == undefined) {
-            first_region_seen = i;
-          }
-          last_region_seen = i;
-        }
-      }
-      if (sel.type == 'Caret') {
-        /*
-        this.selection = {
-          what : 'point',
-          at : sel.anchorOffset + this.regions[first_region_seen].offset,
-        };
-        */
-        // TODO while point doesn't work here
-        this.selection = {
-          what : 'range',
-          from : sel.anchorOffset + this.regions[first_region_seen].offset,
-          to : sel.focusOffset + this.regions[last_region_seen].offset,
-        };
-        this.$emit('selected', this.selection);
-      } else if (sel.type == 'Range') {
-        this.selection = {
-          what : 'range',
-          from : sel.anchorOffset + this.regions[first_region_seen].offset,
-          to : sel.focusOffset + this.regions[last_region_seen].offset,
-        };
-        this.$emit('selected', this.selection);
-      }
-      this.redraw();
-    });
-    this.$refs.actual_text.addEventListener('select', (event) => {
-    });
-    this.$refs.actual_text.addEventListener('selectionchange', (event) => {
-    });
-
     await window.fetch(this.src)
     .then((resp) => resp.text())
     .then((text) => {
@@ -99,12 +44,7 @@ export default {
     },
   },
   methods : {
-    clear_selection() {
-      this.selection = undefined;
-      this.redraw();
-    },
     redraw() {
-      //this.$refs.actual_text.value = this.original_text;
       let output = '';
 
       let dest = this.$refs.actual_text;
@@ -112,10 +52,35 @@ export default {
       while (dest.firstChild)
         dest.removeChild(dest.firstChild);
 
-      function buildSpan(offset, length, text) {
+      function buildSpan(offset, length, text, trim) {
         let span = document.createElement('span');
-        let content = document.createTextNode(text.slice(offset, offset+length));
+        let t = text.slice(offset, offset + length);
+
+        if (trim) {
+          let keep_start = 2;
+          let keep_end = 2;
+          let lines = t.split('\n');
+          if (offset == 0) {
+            // don't keep the starting lines
+            keep_start = 0;
+          }
+          if ((offset + length) == text.length) {
+            // don't keep the ending lines
+            keep_end = 0;
+          }
+          if (lines.length < (keep_start + keep_end)) {
+            // too little to start snipping
+          } else {
+            // cut out everything between start+keep and end-keep
+            lines.splice(keep_start, lines.length - (keep_start + keep_end));
+            lines.splice(keep_start, 0, '...');
+          }
+          t = lines.join('\n');
+        }
+
+        let content = document.createTextNode(t);
         span.appendChild(content);
+        span.classList.add('quote');
         return span;
       }
 
@@ -190,32 +155,32 @@ export default {
 
         for (let i = 0; i < highlights.length; i++) {
           let c = highlights[i].colour;
-          let important = false;
 
           if (this.highlights.emphasis.length == 0  || this.highlights.emphasis.includes(highlights[i].handle)) {
             c += 'ff';
-            important = true;
           } else {
             c += '7f';
           }
-          splice_range(this.regions, highlights[i].position, { colour : c, jump : important });
+          splice_range(this.regions, highlights[i].position, {
+            colour : c,
+            comment : highlights[i].comment,
+          });
         }
       }
 
       if (this.selection && this.selection.what == 'range') {
-        splice_range(this.regions, this.selection, { colour : this.selection_colour, jump : true });
+        splice_range(this.regions, this.selection, {
+          colour : this.selection_colour,
+          comment : '',
+        });
       }
 
       for (let i = 0; i < this.regions.length; i++) {
         let r = this.regions[i];
-        r.span = buildSpan(r.offset, r.length, this.original_text);
+        r.span = buildSpan(r.offset, r.length, this.original_text, r.which.length == 0);
         r.span.dataset.offset = r.offset;
         r.which.forEach((m) => { r.span.style = `background: ${m.colour};`; });
         this.$refs.actual_text.appendChild(r.span);
-        if (r.which.find((m) => m.jump == true) != undefined) {
-          console.log("scrolling");
-          r.span.scrollIntoView({ behaviour : 'smooth', block : 'center' });
-        }
       }
 
     },
@@ -225,14 +190,9 @@ export default {
 
 <style>
 #actual_text {
-  overflow-y: scroll;
   white-space: pre-wrap;
-  height: 300px;
 }
-.selection {
-  background: #aabbcc;
-}
-.highlight {
-  background: #ccbbaa;
+.quote {
+  font-style: italic;
 }
 </style>

@@ -52,6 +52,13 @@ export default {
           let p = h.position;
           switch (p.what) {
             case 'all':
+                highlights.push({
+                  'what' : 'range',
+                  'from' : this.delogicalize_coords(0, 0),
+                  'to' : this.delogicalize_coords(1.0, 1.0),
+                  'colour' : h.colour,
+                  'emphasized' : emp.length ? emp.includes(h.handle) : true,
+                });
                 break;
             case 'point' : 
                 highlights.push({
