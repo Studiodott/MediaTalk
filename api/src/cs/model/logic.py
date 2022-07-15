@@ -1,8 +1,9 @@
 from flask import g
 from pprint import pprint as D
 from cs import app
+from psycopg2 import sql
 
-def search(media_types, tag_handles, user_handles):
+def search(media_types, tag_handles, user_handles, tag_handles_and=False, user_handles_and=False):
 
 	"""
 	media = []
@@ -21,14 +22,29 @@ def search(media_types, tag_handles, user_handles):
 	if media_types and len(media_types):
 		filters.append("mt.name = ANY(%(media_types)s)")
 	if tag_handles and len(tag_handles):
-		filters.append("t.handle = ANY(%(tag_handles)s)")
+		if tag_handles_and:
+			for h in tag_handles:
+				subq = sql.SQL("SELECT DISTINCT ti.media_id FROM tagging ti INNER JOIN tag t ON ti.tag_id = t.id WHERE t.handle={handle}").format(
+					handle=sql.Literal(h)
+				)
+				filters.append(f"m.id IN ({subq.as_string(g.db_con)})")
+		else:
+			filters.append("t.handle = ANY(%(tag_handles)s)")
 	if user_handles and len(user_handles):
-		filters.append("u.handle = ANY(%(user_handles)s)")
+		if user_handles_and:
+			for h in user_handles:
+				subq = sql.SQL('SELECT DISTINCT ti.media_id FROM tagging ti INNER JOIN "user" u ON ti.user_id = u.id WHERE u.handle={handle}').format(
+					handle=sql.Literal(h)
+				)
+				filters.append(f"m.id IN ({subq.as_string(g.db_con)})")
+		else:
+			filters.append("u.handle = ANY(%(user_handles)s)")
 	if not len(filters):
 		filters.append("1=1")
 
 	q = """
 		SELECT
+			m.id as media_id,
 			m.handle as media_handle,
 			mt.name as media_type,
 			m.filename as media_filename,

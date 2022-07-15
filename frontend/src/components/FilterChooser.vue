@@ -32,6 +32,15 @@
           field="name"
           @typing="get_filtered_tags"/>
       </o-field>
+      <div
+        class="is-flex is-flex-direction-row is-justify-content-end">
+        <o-field>
+          <o-switch
+            v-model="tag_handles_and">
+            Only show media with all of these
+          </o-switch>
+        </o-field>
+      </div>
       <o-field
         label="Tagged by">
         <o-inputitems
@@ -43,6 +52,15 @@
           field="key"
           @typing="get_filtered_users"/>
       </o-field>
+      <div
+        class="is-flex is-flex-direction-row is-justify-content-end">
+        <o-field>
+          <o-switch
+            v-model="user_handles_and">
+            Only show media with all of these
+          </o-switch>
+        </o-field>
+      </div>
       <o-field>
         <o-switch
           @input="$emit('set_printable', !printable)"
@@ -111,6 +129,8 @@ export default {
       filtered_tags : this.store.live.tags,
       chosen_users : [],
       filtered_users : this.store.live.users,
+      tag_handles_and : false,
+      user_handles_and : false,
       printable : false,
       showing_link : false,
       current_link : '',
@@ -155,6 +175,12 @@ export default {
                 this.printable = v == 'true';
                 this.$emit('set_printable', this.printable);
                 break;
+            case 'ta':
+                this.tag_handles_all = v == 'true';
+                break;
+            case 'ua':
+                this.tag_handles_all = v == 'true';
+                break;
             default:
                 console.log(`error; don't know filtering argument ${k}`);
                 break;
@@ -187,6 +213,8 @@ export default {
       out = out.concat(this.chosen_tags.map((t) => `t${FILTER_STRING_EQ}${t.handle}`));
       out = out.concat(this.chosen_users.map((u) => `u${FILTER_STRING_EQ}${u.handle}`));
       out.push(`p${FILTER_STRING_EQ}${this.printable ? 'true' : 'false'}`);
+      out.push(`ta${FILTER_STRING_EQ}${this.tag_handles_all ? 'true' : 'false'}`);
+      out.push(`ua${FILTER_STRING_EQ}${this.user_handles_all ? 'true' : 'false'}`);
       return out.join(FILTER_STRING_SEP);
     },
     show_link : function() {
@@ -195,7 +223,11 @@ export default {
       this.showing_link = true;
     },
     update : function() {
-      this.store.search(this.chosen_media_types, this.chosen_tags.map(t => t.handle), this.chosen_users.map(u => u.handle));
+      this.store.search(this.chosen_media_types,
+        this.chosen_tags.map(t => t.handle),
+        this.chosen_users.map(u => u.handle),
+        this.tag_handles_and,
+        this.user_handles_and);
     },
     get_filtered_tags : function(search) {
       this.filtered_tags = this.store.live.tags.filter(tag => {

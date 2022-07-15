@@ -225,15 +225,20 @@ search_parser = reqparse.RequestParser()
 search_parser.add_argument('media_type', type=str, required=False, action='append')
 search_parser.add_argument('tag_handle', type=str, required=False, action='append')
 search_parser.add_argument('user_handle', type=str, required=False, action='append')
+search_parser.add_argument('tag_handles_and', type=bool, required=False)
+search_parser.add_argument('user_handles_and', type=bool, required=False)
 class SearchResource(Resource):
 	decorators = [ jwt_required() ]
 
-	#@marshal_with(search_fields)
+	@marshal_with(search_fields)
 	def get(self):
 		args = search_parser.parse_args()
-		print("search args=")
-		print(args)
-		return logic.search(media_types=args['media_type'], tag_handles=args['tag_handle'], user_handles=args['user_handle']), 200
+		return logic.search(
+			media_types=args['media_type'],
+			tag_handles=args['tag_handle'],
+			user_handles=args['user_handle'],
+			tag_handles_and=args['tag_handles_and'],
+			user_handles_and=args['user_handles_and']), 200
 api.add_resource(SearchResource, '/api/search')
 @app.route('/', methods=[ 'GET' ])
 def push_index():

@@ -123,7 +123,7 @@ export const Store = defineStore('Store', {
 			return this.last_load;
 
 		},
-		async search(media_types, tag_handles, user_handles) {
+		async search(media_types, tag_handles, user_handles, tag_handles_and, user_handles_and) {
 			let p = new URLSearchParams();
 			media_types.forEach((mt) => {
 				p.append('media_type', mt);
@@ -134,6 +134,10 @@ export const Store = defineStore('Store', {
 			user_handles.forEach((u) => {
 				p.append('user_handle', u);
 			});
+			if (tag_handles_and)
+				p.append('tag_handles_and', true);
+			if (user_handles_and)
+				p.append('user_handles_and', true);
 			window.fetch(api_target + '/api/search?' + p.toString(), {
 				headers : {
 					'Authorization' : `Bearer ${localStorage.access_token}`,
