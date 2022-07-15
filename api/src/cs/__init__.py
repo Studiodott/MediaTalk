@@ -70,6 +70,7 @@ api.add_resource(LoginResource, '/api/login')
 user_fields = {
 	'handle' : fields.String,
 	'key' : fields.String,
+	'colour' : fields.String,
 	'created_at' : fields.DateTime(dt_format='iso8601'),
 }
 user_list_fields = {

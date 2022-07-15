@@ -85,12 +85,13 @@ def search(media_types, tag_handles, user_handles, tag_handles_and=False, user_h
 	})
 
 	media, taggings, tags, users = [], [], [], []
+	media_seen, tags_seen, users_seen = set(), set(), set()
 	last_media_handle = None
 	last_tag_handle = None
 	last_user_handle = None
 
 	for row in g.db_cur.fetchall():
-		if row['media_handle'] != last_media_handle:
+		if row['media_handle'] not in media_seen:
 			media.append({
 				'handle' : row['media_handle'],
 				'media_type' : row['media_type'],
@@ -101,22 +102,23 @@ def search(media_types, tag_handles, user_handles, tag_handles_and=False, user_h
 				'url_description' : row['media_url_description'],
 				'created_at' : row['media_created_at'],
 			})
-			last_media_handle = row['media_handle']
-		if row['tag_handle'] != last_tag_handle:
+			media_seen.add(row['media_handle'])
+		if row['tag_handle'] not in tags_seen:
 			tags.append({
 				'handle' : row['tag_handle'],
 				'name' : row['tag_name'],
 				'description' : row['tag_description'],
 				'created_at' : row['tag_created_at'],
 			})
-			last_tag_handle = row['tag_handle']
-		if row['user_handle'] != last_user_handle:
+			tags_seen.add(row['tag_handle'])
+		if row['user_handle'] not in users_seen:
 			users.append({
 				'handle' : row['user_handle'],
 				'key' : row['user_key'],
+				'colour' : row['user_colour'],
 				'created_at' : row['user_created_at'],
 			})
-			last_user_handle = row['user_handle']
+			users_seen.add(row['user_handle'])
 		taggings.append({
 			'user_handle' : row['user_handle'],
 			'media_handle' : row['media_handle'],

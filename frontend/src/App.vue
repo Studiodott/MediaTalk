@@ -60,6 +60,8 @@
                 @set_printable="set_report_printable"
                 class="column is-full mb-6"
                 />
+              <UserList
+                :users="store.search_results.users"/>
               <MediaPrint
                 v-if="report_printable"
                 class="column is-full mb-6"
@@ -92,6 +94,7 @@ import MediaDisplay from "./components/MediaDisplay.vue";
 import MediaPrint from "./components/MediaPrint.vue";
 import FilterChooser from '@/components/FilterChooser.vue';
 import NavBar from '@/components/NavBar.vue';
+import UserList from '@/components/UserList.vue';
 
 const ARG_EQ = '=';
 const ARG_SEP = ',';
@@ -105,6 +108,7 @@ export default {
     MediaPrint,
     FilterChooser,
     NavBar,
+    UserList,
   },
   data : function() {
     return {
