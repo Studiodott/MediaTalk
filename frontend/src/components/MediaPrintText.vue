@@ -175,12 +175,38 @@ export default {
         });
       }
 
+      // go over the regions, turn them into spans
       for (let i = 0; i < this.regions.length; i++) {
         let r = this.regions[i];
+
+        // if this span does not contain any metadata (it is boring text),
+        // ask the span contents to be snipped
         r.span = buildSpan(r.offset, r.length, this.original_text, r.which.length == 0);
+
+        // note its offset for future calculation during select
         r.span.dataset.offset = r.offset;
+
+        // go over the colours, apply them (only last lives)
         r.which.forEach((m) => { r.span.style = `background: ${m.colour};`; });
+
         this.$refs.actual_text.appendChild(r.span);
+
+        // printing-specific; check if we need to add a comment right after that
+        // content-bearing span
+        let comments = r.which
+          .filter((m) => m.comment && m.comment.length)
+          .map((m) => `"${m.comment}"`);
+        if (comments && comments.length) {
+          // create a new span for this comment, stick it immediately after the
+          // one we created above
+          let span = document.createElement('span');
+          let content = document.createTextNode(` (comments: ${comments.join(', ')}) `);
+          span.appendChild(content);
+          span.classList.add('quote');
+          span.classList.add('comment');
+          this.$refs.actual_text.appendChild(span);
+        }
+
       }
 
     },
@@ -188,11 +214,14 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 #actual_text {
   white-space: pre-wrap;
 }
 .quote {
   font-style: italic;
+}
+.comment {
+  font-weight: bold;
 }
 </style>

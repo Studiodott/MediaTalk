@@ -21,6 +21,7 @@ export const Store = defineStore('Store', {
 			audio_volume : 50,
 			sticky_tags : false,
 		},
+		feature_removal_affects_search : true,
 	}),
 	actions: {
 		async try_auth(email) {
@@ -194,11 +195,27 @@ export const Store = defineStore('Store', {
 			this.live.taggings = this.live.taggings.filter((e_tagging) => {
 				return handle != e_tagging.tag_handle;
 			});
+
+			if (this.feature_removal_affects_search) {
+				this.search_results.tags = this.search_results.tags.filter((e_tag) => {
+					return handle != e_tag.handle;
+				});
+				this.search_results.taggings = this.search_results.taggings.filter((e_tagging) => {
+					return handle != e_tagging.tag_handle;
+				});
+			}
+
 		},
 		tagging_removed(handle) {
 			this.live.taggings = this.live.taggings.filter((e_tagging) => {
 				return handle != e_tagging.handle;
 			});
+
+			if (this.feature_removal_affects_search) {
+				this.search_results.taggings = this.search_results.taggings.filter((e_tagging) => {
+					return handle != e_tagging.handle;
+				});
+			}
 		},
 		async remove_tagging(handle) {
 			let t = await window.fetch(api_target + `/api/tagging/${handle}`, {
