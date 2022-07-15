@@ -22,7 +22,7 @@
         <button
           class="button is-fullwidth is-primary"
           ref="selection_button">
-          this part
+          click/hold to tag
         </button>
       </o-radio>
     </div>
