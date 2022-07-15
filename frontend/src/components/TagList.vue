@@ -15,16 +15,16 @@
           role="button"
           :aria-controls="'contentIdForA11y5-' + tag_index"
           :aria-expanded="collapse_open_on">
-          <p
-            class="card-header-title">
-            {{ get_tag_name(tag_handle) }}
-          </p>
           <a
             class="card-header-icon">
             <o-icon
               :icon="props.open ? 'caret-up' : 'caret-down'">
             </o-icon>
           </a>
+          <p
+            class="card-header-title">
+            {{ get_tag_name(tag_handle) }}
+          </p>
         </div>
       </template>
       <div class="card-content">
