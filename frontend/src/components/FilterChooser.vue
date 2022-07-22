@@ -22,6 +22,18 @@
         </o-button>
       </div>
       <o-field
+        label="And only metatags">
+        <o-inputitems
+          v-model="chosen_metatags"
+          :data="filtered_metatags"
+          autocomplete
+          :allow-new="false"
+          :open-on-focus="true"
+          field="name"
+          @typing="get_filtered_metatags"/>
+      </o-field>
+
+      <o-field
         label="And only tags">
         <o-inputitems
           v-model="chosen_tags"
@@ -127,6 +139,8 @@ export default {
       chosen_media_types : [ 'TEXT', 'VIDEO', 'AUDIO', 'IMAGE' ],
       chosen_tags : [],
       filtered_tags : this.store.live.tags,
+      chosen_metatags : [],
+      filtered_metatags : this.store.live.metatags,
       chosen_users : [],
       filtered_users : this.store.live.users,
       tag_handles_and : false,
@@ -146,6 +160,7 @@ export default {
     filter_string : function(f) {
       let seen_media_type = false;
       let tags = [];
+      let metatags = [];
       let users = [];
 
       try {
@@ -166,6 +181,10 @@ export default {
             case 't':
                 let t = this.store.get_tag(v);
                 tags.push(t);
+                break;
+            case 'mtt':
+                let mtt = this.store.get_metatag(v);
+                metatags.push(mtt);
                 break;
             case 'u':
                 let u = this.store.get_user(v);
@@ -197,6 +216,9 @@ export default {
       if (tags.length) {
         this.chosen_tags = tags;
       }
+      if (metatags.length) {
+        this.chosen_metatags = metatags;
+      }
 
       // and get results
       this.update();
@@ -211,6 +233,7 @@ export default {
       let out = [];
       out = out.concat(this.chosen_media_types.map((mt) => `mt${FILTER_STRING_EQ}${mt}`));
       out = out.concat(this.chosen_tags.map((t) => `t${FILTER_STRING_EQ}${t.handle}`));
+      out = out.concat(this.chosen_metatags.map((t) => `mtt${FILTER_STRING_EQ}${t.handle}`));
       out = out.concat(this.chosen_users.map((u) => `u${FILTER_STRING_EQ}${u.handle}`));
       out.push(`p${FILTER_STRING_EQ}${this.printable ? 'true' : 'false'}`);
       out.push(`ta${FILTER_STRING_EQ}${this.tag_handles_all ? 'true' : 'false'}`);
@@ -223,8 +246,13 @@ export default {
       this.showing_link = true;
     },
     update : function() {
+      let tags = [].concat(this.chosen_tags.map(t => t.handle));
+      this.chosen_metatags.forEach((mtt) => {
+        tags = tags.concat(mtt.tag_handles);
+      });
+
       this.store.search(this.chosen_media_types,
-        this.chosen_tags.map(t => t.handle),
+        tags,
         this.chosen_users.map(u => u.handle),
         this.tag_handles_and,
         this.user_handles_and);
@@ -233,6 +261,13 @@ export default {
       this.filtered_tags = this.store.live.tags.filter(tag => {
         return (
           tag.name.toString().toLowerCase().indexOf(search.toLowerCase()) >= 0
+        );
+      });
+    },
+    get_filtered_metatags : function(search) {
+      this.filtered_metatags = this.store.live.metatags.filter(metatag => {
+        return (
+          metatag.name.toString().toLowerCase().indexOf(search.toLowerCase()) >= 0
         );
       });
     },

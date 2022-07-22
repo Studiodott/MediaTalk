@@ -13,6 +13,7 @@ export const Store = defineStore('Store', {
 			media : [],
 			tags : [],
 			taggings : [],
+			metatags : [],
 			users : [],
 		},
 		last_load : undefined,
@@ -106,6 +107,16 @@ export const Store = defineStore('Store', {
 				this.log_out();
 			}));
 
+			p.push(window.fetch(api_target + '/api/metatag', std_opts)
+			.then(resp => resp.json())
+			.then(data => {
+				this.live.metatags.splice(0);
+				data.metatags.forEach((e) => { this.live.metatags.push(e); });
+			})
+			.catch((error) => {
+				this.log_out();
+			}));
+
 			p.push(window.fetch(api_target + '/api/tagging', std_opts)
 			.then(resp => resp.json())
 			.then(data => {
@@ -188,6 +199,12 @@ export const Store = defineStore('Store', {
 			});
 			this.live.taggings.splice(0, 0, tagging);
 		},
+		metatag_added(metatag) {
+			this.live.metatags = this.live.metatags.filter((e_metatag) => {
+				return metatag.handle != e_metatag.handle;
+			});
+			this.live.metatags.splice(0, 0, metatag);
+		},
 		tag_removed(handle) {
 			this.live.tags = this.live.tags.filter((e_tag) => {
 				return handle != e_tag.handle;
@@ -217,6 +234,15 @@ export const Store = defineStore('Store', {
 				});
 			}
 		},
+		metatag_removed(handle) {
+			this.live.metatags = this.live.metatags.filter((e_metatag) => {
+				return handle != e_metatag.handle;
+			});
+		},
+		metatag_changed(changed_metatag) {
+			this.metatag_removed(changed_metatag.handle);
+			this.metatag_added(changed_metatag);
+		},
 		async remove_tagging(handle) {
 			let t = await window.fetch(api_target + `/api/tagging/${handle}`, {
 				method : 'DELETE',
@@ -239,6 +265,19 @@ export const Store = defineStore('Store', {
 				},
 			}).catch((error) => {
 				console.log("error while deleting tag: " + error);
+				this.logout();
+			});
+			return t;
+		},
+		async remove_metatag(handle) {
+			let t = await window.fetch(api_target + `/api/metatag/${handle}`, {
+				method : 'DELETE',
+				headers : {
+					'Content-Type' : 'application/json',
+					'Authorization' : `Bearer ${localStorage.access_token}`,
+				},
+			}).catch((error) => {
+				console.log("error while deleting metatag: " + error);
 				this.logout();
 			});
 			return t;
@@ -284,6 +323,54 @@ export const Store = defineStore('Store', {
 
 			return t;
 		},
+		async create_metatag(name) {
+			let t = await window.fetch(api_target + '/api/metatag', {
+				method : 'POST',
+				headers : { 
+					'Content-Type' : 'application/json',
+					'Authorization' : `Bearer ${localStorage.access_token}`,
+				},
+				body : JSON.stringify({
+					'name' : name,
+				}),
+			})
+			.then(resp => resp.json())
+			.catch((error) => {
+				console.log("error while creating metatag: " + error);
+				this.log_out();
+			});
+			return t;
+		},
+
+		async metatag_remove_tag(metatag_handle, tag_handle) {
+			let u = `/api/metatag/${metatag_handle}/${tag_handle}`
+			let t = await window.fetch(api_target + u, {
+				method : 'DELETE',
+				headers : {
+					'Content-Type' : 'application/json',
+					'Authorization' : `Bearer ${localStorage.access_token}`,
+				},
+			}).catch((error) => {
+				console.log("error while tagi from metatag: " + error);
+				this.logout();
+			});
+			return t;
+		},
+
+		async metatag_add_tag(metatag_handle, tag_handle) {
+			let u = `/api/metatag/${metatag_handle}/${tag_handle}`
+			let t = await window.fetch(api_target + u, {
+				method : 'POST',
+				headers : {
+					'Content-Type' : 'application/json',
+					'Authorization' : `Bearer ${localStorage.access_token}`,
+				},
+			}).catch((error) => {
+				console.log("error while tagi from metatag: " + error);
+				this.logout();
+			});
+			return t;
+		},
 
 		get_taggings_for_media(media_handle) {
 			let filtered = this.live.taggings.filter((tagging) => {
@@ -308,6 +395,14 @@ export const Store = defineStore('Store', {
 			for (let i = 0; i < this.live.tags.length; i++) {
 				if (handle == this.live.tags[i].handle)
 					return this.live.tags[i];
+			}
+			return null;
+		},
+
+		get_metatag(handle) {
+			for (let i = 0; i < this.live.metatags.length; i++) {
+				if (handle == this.live.metatags[i].handle)
+					return this.live.metatags[i];
 			}
 			return null;
 		},

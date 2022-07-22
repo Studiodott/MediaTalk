@@ -8,7 +8,7 @@ import VueSocketIO from "vue-3-socket.io";
 import '@oruga-ui/theme-bulma/dist/bulma.css';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faCaretUp, faCaretDown, faCheck, faTag, faTags, faPen, faTrashCan, faComment, faTimes, faVolumeHigh } from '@fortawesome/free-solid-svg-icons';
+import { faCaretUp, faCaretDown, faCheck, faTag, faTags, faPen, faTrashCan, faComment, faTimes, faVolumeHigh, faPlus, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 library.add(
@@ -21,7 +21,9 @@ library.add(
 	faTrashCan,
 	faComment,
 	faTimes,
-	faVolumeHigh
+	faVolumeHigh,
+	faPlus,
+	faExclamationCircle
 );
 
 const customConfig = {

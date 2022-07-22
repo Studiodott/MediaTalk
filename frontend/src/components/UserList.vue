@@ -1,6 +1,7 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
   <div
+    v-if="users.length"
     class="box columns">
     <div
       class="column">

@@ -6,19 +6,38 @@ from pprint import pprint as D
 from cs import app
 from cs.model.setup import key
 
-def list():
-	q = """
-		SELECT
-			id,
-			handle,
-			name,
-			description,
-			created_at
-		FROM
-			tag;
-		"""
+def list(metatag_handle=None):
 
-	g.db_cur.execute(q)
+	if metatag_handle:
+		q = """
+			SELECT
+				t.id as id,
+				t.handle as handle,
+				t.name as name,
+				t.description as description,
+				t.created_at as created_at
+			FROM
+				tag t
+				INNER JOIN metatag_tag mtt ON t.id = mtt.tag_id
+				INNER JOIN metatag mt ON mtt.metatag_id = mt.id
+			WHERE
+				mt.handle = %(metatag_handle)s;
+			"""
+	else:
+		q = """
+			SELECT
+				id,
+				handle,
+				name,
+				description,
+				created_at
+			FROM
+				tag;
+			"""
+
+	g.db_cur.execute(q, {
+		'metatag_handle' : metatag_handle,
+	})
 	return g.db_cur.fetchall()
 
 def get(handle):

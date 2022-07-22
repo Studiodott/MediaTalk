@@ -39,7 +39,7 @@ def output_json(data, code, headers=None):
 	resp.headers.extend(headers or {})
 	return resp
 
-from cs.model import setup, media, tag, tagging, logic, user
+from cs.model import setup, media, tag, tagging, logic, user, metatag
 from cs.background import tasks
 
 login_fields = {
@@ -111,6 +111,65 @@ class MediaResource(Resource):
 	def get(self, handle):
 		return media.get(handle), 200
 api.add_resource(MediaResource, '/api/media/<handle>')
+
+metatag_fields = {
+	'handle' : fields.String,
+	'name' : fields.String,
+	'created_at' : fields.DateTime(dt_format='iso8601'),
+	'tag_handles' : fields.List(fields.String),
+}
+metatag_list_fields = {
+	'metatags' : fields.List(fields.Nested(metatag_fields)),
+}
+metatag_parser = reqparse.RequestParser()
+metatag_parser.add_argument('name', type=str, required=True)
+class MetaTagManagerResource(Resource):
+	@marshal_with(metatag_list_fields)
+	def get(self):
+		mts = metatag.list()
+		for mt in mts:
+			mt['tag_handles'] = [ t['handle'] for t in tag.list(metatag_handle=mt['handle']) ]
+		return { 'metatags' : mts }, 200
+	@marshal_with(metatag_fields)
+	def post(self):
+		args = metatag_parser.parse_args()
+		handle = metatag.create(args['name'])
+		mt = metatag.get(handle)
+		mt['tag_handles'] = []
+		socketio.emit('metatag_created', mt)
+		g.db_commit = True
+		return mt, 200
+api.add_resource(MetaTagManagerResource, '/api/metatag')
+
+class MetaTagResource(Resource):
+	@marshal_with(metatag_fields)
+	def get(self, handle):
+		return metatag.get(handle), 200
+	def delete(self, handle):
+		metatag.remove(handle)
+		socketio.emit('metatag_removed', handle)
+		g.db_commit = True
+		return '', 201
+api.add_resource(MetaTagResource, '/api/metatag/<handle>')
+
+class MetaTagTagResource(Resource):
+	def post(self, metatag_handle, tag_handle):
+		metatag.add_tag(metatag_handle, tag_handle)
+		mt = metatag.get(metatag_handle)
+		print(f'mt={mt}')
+		mt['tag_handles'] = [ t['handle'] for t in tag.list(metatag_handle=metatag_handle) ]
+		socketio.emit('metatag_changed', mt)
+		g.db_commit = True
+		return '', 201
+
+	def delete(self, metatag_handle, tag_handle):
+		metatag.remove_tag(metatag_handle, tag_handle)
+		mt = metatag.get(metatag_handle)
+		mt['tag_handles'] = [ t['handle'] for t in tag.list(metatag_handle=metatag_handle) ]
+		socketio.emit('metatag_changed', mt)
+		g.db_commit = True
+		return '', 201
+api.add_resource(MetaTagTagResource, '/api/metatag/<metatag_handle>/<tag_handle>')
 
 tag_fields = {
 	'handle' : fields.String,

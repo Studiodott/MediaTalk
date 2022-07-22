@@ -1,5 +1,7 @@
 drop table if exists "tagging";
+drop table if exists "metatag_tag";
 drop table if exists "tag";
+drop table if exists "metatag";
 drop table if exists "media";
 drop table if exists "media_type";
 drop table if exists "user";
@@ -81,6 +83,16 @@ insert into "media" ("handle", "media_type_id", "filename", "path", "description
 );
 */
 
+create table "metatag"
+(
+	id serial not null,
+	handle character varying(26) not null,
+	name character varying(128) not null unique,
+	created_at timestamp not null,
+	primary key (id)
+);
+create unique index metatag_handle_idx on metatag (handle);
+
 create table "tag"
 (
 	id serial not null,
@@ -91,6 +103,18 @@ create table "tag"
 	primary key (id)
 );
 create unique index tag_handle_idx on tag (handle);
+
+create table "metatag_tag"
+(
+	id serial not null,
+	metatag_id integer,
+	tag_id integer,
+	created_at timestamp not null,
+	primary key (id),
+	constraint metatag_tag_metatag_fk foreign key (metatag_id) references metatag (id) on delete cascade,
+	constraint metatag_tag_tag_fk foreign key (tag_id) references tag (id) on delete cascade
+);
+create unique index meta_tag_unique_combinations_idx on metatag_tag (metatag_id, tag_id);
 
 insert into "tag" ("handle", "name", "description", "created_at") values
 	('01G0D43XSHJE6VGWNX2WA45MEH', 'Happy', 'Happiness', NOW() );

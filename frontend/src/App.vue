@@ -75,6 +75,13 @@
                 :key="media_index"
                 v-bind="media"/>
             </o-tab-item>
+
+            <o-tab-item
+              value="metatags"
+              label="Metatags">
+              <MetaTagList/>
+            </o-tab-item>
+
           </o-tabs>
         </div>
         <div
@@ -95,6 +102,7 @@ import MediaPrint from "./components/MediaPrint.vue";
 import FilterChooser from '@/components/FilterChooser.vue';
 import NavBar from '@/components/NavBar.vue';
 import UserList from '@/components/UserList.vue';
+import MetaTagList from '@/components/MetaTagList.vue';
 
 const ARG_EQ = '=';
 const ARG_SEP = ',';
@@ -109,6 +117,7 @@ export default {
     FilterChooser,
     NavBar,
     UserList,
+    MetaTagList,
   },
   data : function() {
     return {
@@ -179,7 +188,15 @@ export default {
         this.sockets.subscribe('tag_removed', (data) => {
           this.store.tag_removed(data);
         });
-
+        this.sockets.subscribe('metatag_created', (data) => {
+          this.store.metatag_added(data);
+        });
+        this.sockets.subscribe('metatag_changed', (data) => {
+          this.store.metatag_changed(data);
+        });
+        this.sockets.subscribe('metatag_removed', (data) => {
+          this.store.metatag_removed(data);
+        });
       }).then(() => {
         this.process_hash();
       }).catch((e) => {
