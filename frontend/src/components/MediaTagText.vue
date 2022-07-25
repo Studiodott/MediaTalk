@@ -42,6 +42,11 @@ export default {
     this.$refs.actual_text.addEventListener('mouseup', (event) => {
       let sel = document.getSelection();
       let range = sel.getRangeAt(0);
+      if (sel.anchorNode.id == 'actual_text') {
+        console.log("doesnt look right"); 
+        // this is not a text selection, this is likely a scroll
+        return;
+      }
       let first_region_seen = undefined;
       let last_region_seen = undefined;
       for (let i = 0; i < this.regions.length; i++) {
@@ -53,6 +58,14 @@ export default {
           last_region_seen = i;
         }
       }
+
+      // the focus node may precede the anchor node, meaning the selection
+      // is backwards, in which case we need to flip the regions
+      let pos_diff = sel.anchorNode.compareDocumentPosition(sel.focusNode);
+      if (pos_diff & Node.DOCUMENT_POSITION_PRECEDING) {
+        [ first_region_seen, last_region_seen ] = [ last_region_seen, first_region_seen ];
+      }
+
       if (sel.type == 'Caret') {
         /*
         this.selection = {
