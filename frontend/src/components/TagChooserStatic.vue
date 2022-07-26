@@ -1,6 +1,5 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
-
   <section>
     <div
       class="field">
@@ -49,6 +48,7 @@
       v-model="chosenTags"
       autocomplete
       :allow-new="true"
+      :open-on-focus="true"
       :data="filteredTags"
       field="name"
       :allowDuplicates="false"

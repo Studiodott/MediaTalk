@@ -1,10 +1,6 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
   <section>
-    <o-field
-      label="At">
-      <div hidden></div>
-    </o-field>
     <div
       class="field">
       <o-radio
@@ -38,9 +34,10 @@
       v-model="chosenTags"
       autocomplete
       :allow-new="true"
+      :open-on-focus="true"
       :data="filteredTags"
       field="name"
-      :allowDuplicates="true"
+      :allowDuplicates="false"
       @typing="getFilteredTags">
     </o-inputitems>
   </o-field>
@@ -64,7 +61,6 @@
       reset
     </o-button>
   </div>
-
 </template>
 
 <script>
@@ -82,7 +78,7 @@ export default {
     return {
       chosenTags : [],
       comment : '',
-      filteredTags : this.store.tags,
+      filteredTags : this.store.live.tags,
 
       mode : 'all',
 
@@ -121,7 +117,7 @@ export default {
     return { store };
   },
   mounted : function() {
-    this.$refs.selection_button.addEventListener('mousedown', (e) => {
+ this.$refs.selection_button.addEventListener('mousedown', (e) => {
 
       // don't, if we've never seen an advance
       if (!this.advance)
