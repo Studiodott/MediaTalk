@@ -3,6 +3,17 @@
   <div
     class="box">
     <div
+      class="is-flex is-flex-direction-row is-align-items-center pb-4">
+      <o-icon
+        :icon="get_icon_for_type()"
+        size="large">
+      </o-icon>
+      <h2
+        class="subtitle">
+        {{ filename }}
+      </h2>
+    </div>
+    <div
       class="columns">
       <div
         class="column is-flex is-flex-direction-column is-align-items-stretch">
@@ -121,6 +132,26 @@ export default {
     // we ourselves want a tagging list highlighted, propagate to media
     highlight_taggings : function(l) {
       this.highlights_for_media = l;
+    },
+    // a nice icon for this media type
+    get_icon_for_type : function() {
+      switch (this.media_type) {
+        case 'VIDEO':
+            return 'video';
+            break;
+        case 'AUDIO':
+            return 'microphone';
+            break;
+        case 'TEXT':
+            return 'file-lines';
+            break;
+        case 'IMAGE':
+            return 'camera';
+            break;
+        default:
+            return 'question';
+            break;
+      }
     },
   },
   computed : {

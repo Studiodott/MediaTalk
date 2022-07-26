@@ -1,47 +1,61 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
   <div
-    class="box columns">
+    class="box">
     <div
-      class="column is-flex is-flex-direction-column is-align-items-stretch">
+      class="is-flex is-flex-direction-row is-align-items-center pb-4">
+      <o-icon
+        :icon="get_icon_for_type()"
+        size="large">
+      </o-icon>
+      <h2
+        class="subtitle">
+        {{ filename }}
+      </h2>
+    </div>
+    <div
+     class="columns">
       <div
-        v-for="(taggings, tag_handle, tag_index) in getTaggingsForMedia">
-        <p>
-          Tag "<b>{{ get_tag_name(tag_handle) }}</b>"
-        </p>
+        class="column is-flex is-flex-direction-column is-align-items-stretch">
         <div
-          v-if="media_type == 'VIDEO'">
-          <MediaPrintVideo
-            :selection_colour="store.get_my_colour()"
-            :highlights="{ 'taggings' : taggings, 'emphasis' : [] }"
-            :selection="selection_for_media"
-            :src="url_original"
-            :waveform="url_description"/>
-        </div>
-        <div
-          v-else-if="media_type == 'AUDIO'">
-          <MediaPrintAudio
-            :selection_colour="store.get_my_colour()"
-            :highlights="{ 'taggings' : taggings, 'emphasis' : [] }"
-            :selection="selection_for_media"
-            :src="url_original"
-            :waveform="url_description"/>
-        </div>
-        <div
-          v-else-if="media_type == 'IMAGE'">
-          <MediaPrintImage
-            :selection_colour="store.get_my_colour()"
-            :highlights="{ 'taggings' : taggings, 'emphasis' : [] }"
-            v-bind:src="url_original"/>
-        </div>
-        <div
-          v-else-if="media_type == 'TEXT'">
-          <MediaPrintText
-            :selection_colour="store.get_my_colour()"
-            :highlights="{ 'taggings' : taggings, 'emphasis' : [] }"
-            v-bind:src="url_original"/>
-        </div>
+          v-for="(taggings, tag_handle, tag_index) in getTaggingsForMedia">
+          <p>
+            Tag "<b>{{ get_tag_name(tag_handle) }}</b>"
+          </p>
+          <div
+            v-if="media_type == 'VIDEO'">
+            <MediaPrintVideo
+              :selection_colour="store.get_my_colour()"
+              :highlights="{ 'taggings' : taggings, 'emphasis' : [] }"
+              :selection="selection_for_media"
+              :src="url_original"
+              :waveform="url_description"/>
+          </div>
+          <div
+            v-else-if="media_type == 'AUDIO'">
+            <MediaPrintAudio
+              :selection_colour="store.get_my_colour()"
+              :highlights="{ 'taggings' : taggings, 'emphasis' : [] }"
+              :selection="selection_for_media"
+              :src="url_original"
+              :waveform="url_description"/>
+          </div>
+          <div
+            v-else-if="media_type == 'IMAGE'">
+            <MediaPrintImage
+              :selection_colour="store.get_my_colour()"
+              :highlights="{ 'taggings' : taggings, 'emphasis' : [] }"
+              v-bind:src="url_original"/>
+          </div>
+          <div
+            v-else-if="media_type == 'TEXT'">
+            <MediaPrintText
+              :selection_colour="store.get_my_colour()"
+              :highlights="{ 'taggings' : taggings, 'emphasis' : [] }"
+              v-bind:src="url_original"/>
+          </div>
 
+        </div>
       </div>
     </div>
   </div>
@@ -100,7 +114,26 @@ export default {
       }
       return tag.name;
     },
-
+    // a nice icon for this media type
+    get_icon_for_type : function() {
+      switch (this.media_type) {
+        case 'VIDEO':
+            return 'video';
+            break;
+        case 'AUDIO':
+            return 'microphone';
+            break;
+        case 'TEXT':
+            return 'file-lines';
+            break;
+        case 'IMAGE':
+            return 'camera';
+            break;
+        default:
+            return 'question';
+            break;
+      }
+    },
   },
   computed : {
     getTaggingsForMedia() {
