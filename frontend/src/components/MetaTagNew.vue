@@ -54,7 +54,9 @@ export default {
         return;
       }
 
-      this.store.create_metatag(this.name);
+      this.store.create_metatag(this.name).then(() => {
+        this.reset();
+      });
 
     },
     reset() {
