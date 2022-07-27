@@ -93,7 +93,7 @@ export default {
         };
         this.$emit('selected', this.selection);
       }
-      this.redraw();
+      this.redraw(false);
     });
     this.$refs.actual_text.addEventListener('select', (event) => {
     });
@@ -121,7 +121,7 @@ export default {
       this.selection = undefined;
       this.redraw();
     },
-    redraw() {
+    redraw(jump_to_important=true) {
       //this.$refs.actual_text.value = this.original_text;
       let output = '';
 
@@ -230,9 +230,10 @@ export default {
         r.span.dataset.offset = r.offset;
         r.which.forEach((m) => { r.span.style = `background: ${m.colour};`; });
         this.$refs.actual_text.appendChild(r.span);
-        if (r.which.find((m) => m.jump == true) != undefined) {
-          console.log("scrolling");
-          r.span.scrollIntoView({ behaviour : 'smooth', block : 'center' });
+        if (jump_to_important) {
+          if (r.which.find((m) => m.jump == true) != undefined) {
+            r.span.scrollIntoView({ behaviour : 'smooth', block : 'center' });
+          }
         }
       }
 
