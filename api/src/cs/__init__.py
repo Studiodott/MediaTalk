@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from flask import Flask, g, render_template, send_from_directory, make_response
 import flask.json
+import werkzeug.datastructures
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 from flask_restful import Resource, Api, reqparse, fields, marshal_with
@@ -11,6 +12,7 @@ import psycopg2
 import psycopg2.extras
 import json
 import os
+from ulid import ULID
 from datetime import datetime, timedelta
 from pprint import pprint as D
 
@@ -26,6 +28,8 @@ app = Flask(__name__)
 app.json_encoder = DTJsonEncoder
 app.config['JWT_SECRET_KEY'] = os.environ['CONF_APP_SECRET']
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=356)
+app.config['UPLOAD_DIR'] = os.getenv('CONF_APP_UPLOAD_DIR', '/tmp')
+
 socketio = SocketIO(app, cors_allowed_origins='*', logger=True, json=flask.json,
 	message_queue=os.environ['REDIS_URL'])
 cors = CORS(app, resources={ r"/*" : { 'origins' : [ 'http://localhost:3000' ] } })
@@ -45,6 +49,7 @@ from cs.background import tasks
 login_fields = {
 	'access_token' : fields.String,
 	'colour' : fields.String,
+	'admin' : fields.Boolean,
 }
 login_parser = reqparse.RequestParser()
 login_parser.add_argument('key', type=str, required=True)
@@ -300,6 +305,85 @@ class SearchResource(Resource):
 			tag_handles_and=args['tag_handles_and'],
 			user_handles_and=args['user_handles_and']), 200
 api.add_resource(SearchResource, '/api/search')
+
+integration_media_upload_parser = reqparse.RequestParser()
+integration_media_upload_parser.add_argument('media', type=werkzeug.datastructures.FileStorage, location='files', required=True)
+integration_media_upload_parser.add_argument('media_type', type=str, required=True)
+integration_media_upload_parser.add_argument('handle', type=str, required=False)
+integration_media_upload_parser.add_argument('description', type=str)
+p = """
+<html>
+<body>
+<pre>
+{message}
+</pre>
+<form method="POST" enctype="multipart/form-data">
+	<div><label for="media_type">Type:</label>
+	<select name="media_type" id="media_type">
+		<option value="TEXT">TEXT</option>
+		<option value="IMAGE">IMAGE</option>
+		<option value="AUDIO">AUDIO</option>
+		<option value="VIDEO">VIDEO</option>
+	</select></div>
+	<p>You may supply a unique handle for this media, to check for future duplicates.</p>
+	<p>If you supply one here, any future uploads with the same handle will not be processed.</p>
+	<p>This allows the uploader to work in batches with possible repetitions, without duplicates on the server.</p>
+	<p>If left blank, a unique handle will be generated.</p>
+	<div><label for="handle">Your unique handle:</label>
+	<input type="text" name="handle" id="handle"></div>
+	<div><label for="description">Description:</label>
+	<input type="text" name="description" id="description"></div>
+	<div><label for="media">Media file:</label>
+	<input type="file" name="media" id="media"></div>
+	<input type="submit" value="Upload">
+</form>
+<pre>
+or with curl:
+
+curl -X POST -F media_type=TEXT -F handle=your_handle -F description="a description" -F media=@your_file THIS_URL
+</pre>
+</body>
+</html>
+"""
+
+class IntegrationMediaUploadResource(Resource):
+	def get(self):
+		msg = 'This is not a test, input will be processed and saved. On success 201 will be returned, processing is done asynchronously.'
+		return make_response(p.format(message=msg), 200, { "Content-Type" : "text/html" })
+
+	def post(self):
+		args = integration_media_upload_parser.parse_args()
+		handle = args['handle'] if ('handle' in args and len(args['handle'])) else str(ULID())
+		dest = os.path.join(app.config['UPLOAD_DIR'], args['media'].filename)
+		D("saving to {}".format(dest))
+		args['media'].save(dest)
+		tasks.sync_local_file.delay(dest, args['media'].filename, args['media_type'], handle, args['description'])
+		return '', 201
+api.add_resource(IntegrationMediaUploadResource, '/api/integration/media/upload')
+
+class IntegrationMediaUploadTestResource(Resource):
+	def get(self):
+		msg = 'This is a test for development purposes, input is inspected but not processed/saved.'
+		return make_response(p.format(message=msg), 200, { "Content-Type" : "text/html" })
+
+	def post(self):
+		args = integration_media_upload_parser.parse_args()
+		handle = args['handle'] if ('handle' in args and len(args['handle'])) else str(ULID())
+		dest = os.path.join(app.config['UPLOAD_DIR'], args['media'].filename)
+		args['media'].save(dest)
+		ret = {
+			'status' : 'looks good!',
+			'filename' : args['media'].filename,
+			'media_type' : args['media_type'],
+			'handle' : handle,
+			'description' : args['description'],
+			'filesize' : os.stat(dest).st_size,
+		}
+		os.remove(dest)
+		msg = 'Received:\n{}'.format(json.dumps(ret, indent=2))
+		return make_response(p.format(message=msg), 200, { "Content-Type" : "text/html" })
+api.add_resource(IntegrationMediaUploadTestResource, '/api/integration/test/media/upload')
+
 @app.route('/', methods=[ 'GET' ])
 def push_index():
 	D(f"staticindex")
@@ -312,7 +396,7 @@ def push_static(path=None):
 
 @app.route('/bar', methods=[ 'GET' ])
 def bar():
-	tasks.cookle.apply_async()
+	tasks.sync_gdrive.apply_async()
 	return "ok", 200
 
 @app.route('/foo', methods=[ 'GET' ])

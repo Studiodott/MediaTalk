@@ -102,18 +102,18 @@ def process_audio(in_file_name, out_file):
 	img.write(out_file, pixels)
 
 @celery_app.task
-def cookle():
+def sync_gdrive():
 
 	from flask import g
 
 	with app.app_context():
 		setup.db_setup()
-		sync()
+		sync_gdrive_real()
 		g.db_commit = True
 		setup.db_wrapup(False)
 
 @celery_app.task
-def sync():
+def sync_gdrive_real():
 
 	path_original = path.join(os.environ['CONF_APP_MEDIA_PATH'], 'original')
 	path_generated = path.join(os.environ['CONF_APP_MEDIA_PATH'], 'generated')
@@ -125,6 +125,7 @@ def sync():
 	aws_bucket = os.environ['CONF_AWS_BUCKET']
 	aws_region = os.environ['CONF_AWS_REGION']
 
+	print(f'talking to folder_id={folder_id} as api_key={api_key}')
 	try:
 		# set up the sync
 		drive_service = discovery.build('drive', 'v3', developerKey=api_key)
@@ -168,6 +169,7 @@ def sync():
 		print(f"error while setting up drive: {e}")
 		return False
 
+	print(f"found {len(drive_files)} on this drive")
 	for f in drive_files:
 		print(f"inspecting {f['name']}")
 		existing_file = media.find_by_upstream_handle(f['id'])
@@ -270,5 +272,110 @@ def sync():
 			for what, where in temp_files.items():
 				print(f"removing temp_file {where.name} for {what}")
 				os.remove(where.name)
+
+	return True
+
+@celery_app.task
+def sync_local_file(_path, name, _type, upstream_handle, description):
+
+	from flask import g
+
+	with app.app_context():
+		setup.db_setup()
+		sync_local_file_real(_path, name, _type, upstream_handle, description)
+		g.db_commit = True
+		setup.db_wrapup(False)
+
+@celery_app.task
+def sync_local_file_real(_path, name, _type, upstream_handle, description):
+
+	path_original = path.join(os.environ['CONF_APP_MEDIA_PATH'], 'original')
+	path_generated = path.join(os.environ['CONF_APP_MEDIA_PATH'], 'generated')
+
+	aws_resource = boto3.resource('s3')
+	aws_bucket = os.environ['CONF_AWS_BUCKET']
+	aws_region = os.environ['CONF_AWS_REGION']
+
+	existing_file = media.find_by_upstream_handle(upstream_handle)
+
+	if existing_file:
+		print(f"  already exists, skipping...")
+		return
+
+	fdesc = {
+		'filename' : name,
+		'path' : _path,
+		'media_type' : _type,
+		'upstream_handle' : upstream_handle,
+		'size_bytes' : None,
+		'media_desc' : None,
+		'status' : 'discovered',
+		'error' : None,
+		'description' : description,
+	}
+
+	temp_files = {}
+
+	try:
+
+		stats = os.stat(_path)
+		fdesc['size_bytes'] = stats.st_size
+		print(f"  saved {stats.st_size} bytes")
+
+		# hash it
+		fdesc['status'] = 'hashing'
+		fdesc['checksum'] = hash_file(_path)
+
+		# handle it
+		try:
+			fdesc['status'] = 'processing'
+			if fdesc['media_type'] in [ 'AUDIO', 'VIDEO' ]:
+				temp_files['waveform'] = NamedTemporaryFile(delete=False)
+				process_audio(_path, temp_files['waveform'])
+				temp_files['waveform'].close()
+		except Exception as e:
+			print(f"error processing file: {e}")
+
+		# upload the original
+		with open(_path, 'rb') as f:
+			aws_path = path.join(
+				os.environ['CONF_APP_MEDIA_PATH'],
+				'original',
+				fdesc['checksum']
+			)
+			aws_resource.Bucket(aws_bucket).put_object(
+				Key=aws_path, Body=f)
+			fdesc['url_original'] = f"https://{aws_bucket}.s3.{aws_region}.amazonaws.com/{aws_path}"
+
+		# upload the waveform, if existing
+		if 'waveform' in temp_files:
+			with open(temp_files['waveform'].name, 'rb') as f:
+				aws_path = path.join(
+					os.environ['CONF_APP_MEDIA_PATH'],
+					'generated',
+					f"{fdesc['checksum']}_waveform"
+				)
+				aws_resource.Bucket(aws_bucket).put_object(
+					Key=aws_path, Body=f)
+				fdesc['url_description'] = f"https://{aws_bucket}.s3.{aws_region}.amazonaws.com/{aws_path}"
+		else:
+			fdesc['url_description'] = ''
+
+		fdesc['status'] = 'ok'
+
+	except IOError as e:
+		print(f"ERROR {e}")
+		fdesc['error'] = f"while {fdesc['status']}: {e}"
+		fdesc['status'] = 'failed'
+		raise e
+	else:
+		handle = media.create(fdesc)
+		g.db_con.commit()
+		socketio.emit('media_created', media.get(handle), broadcast=True)
+	finally:
+		os.remove(_path)
+		for what, where in temp_files.items():
+			print(f"removing temp_file {where.name} for {what}")
+			os.remove(where.name)
 
 	return True
