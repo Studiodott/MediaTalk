@@ -355,6 +355,7 @@ class IntegrationMediaUploadResource(Resource):
 		args = integration_media_upload_parser.parse_args()
 		handle = args['handle'] if ('handle' in args and len(args['handle'])) else str(ULID())
 		dest = os.path.join(app.config['UPLOAD_DIR'], args['media'].filename)
+		assert args['media_type'] in [ 'TEXT', 'IMAGE', 'AUDIO', 'VIDEO' ]
 		D("saving to {}".format(dest))
 		args['media'].save(dest)
 		tasks.sync_local_file.delay(dest, args['media'].filename, args['media_type'], handle, args['description'])
@@ -369,6 +370,7 @@ class IntegrationMediaUploadTestResource(Resource):
 	def post(self):
 		args = integration_media_upload_parser.parse_args()
 		handle = args['handle'] if ('handle' in args and len(args['handle'])) else str(ULID())
+		assert args['media_type'] in [ 'TEXT', 'IMAGE', 'AUDIO', 'VIDEO' ]
 		dest = os.path.join(app.config['UPLOAD_DIR'], args['media'].filename)
 		args['media'].save(dest)
 		ret = {
