@@ -15,6 +15,17 @@ def gen_colour():
 		''.join([ '{:02x}'.format(floor + randint(0, 0xff-floor)) for x in range(3) ])
 	)
 
+def count():
+	q = """
+		SELECT
+			COUNT(id) as cnt
+		FROM
+			"user";
+		"""
+
+	g.db_cur.execute(q)
+	return g.db_cur.fetchone()['cnt']
+
 def list():
 	q = """
 		SELECT
@@ -22,6 +33,7 @@ def list():
 			handle,
 			key,
 			colour,
+			admin,
 			created_at
 		FROM
 			"user";
@@ -37,6 +49,7 @@ def get_by_handle(handle):
 			handle,
 			key,
 			colour,
+			admin,
 			created_at
 		FROM
 			"user"
@@ -61,6 +74,7 @@ def get_by_key(key):
 			handle,
 			key,
 			colour,
+			admin,
 			created_at
 		FROM
 			"user"
@@ -74,7 +88,7 @@ def get_by_key(key):
 	return g.db_cur.fetchone()
 
 
-def create(desired_key):
+def create(desired_key, admin=False):
 	handle = key()
 
 	q = """
@@ -82,17 +96,20 @@ def create(desired_key):
 			"handle",
 			"key",
 			"colour",
+			"admin",
 			"created_at"
 		) VALUES (
 			%(handle)s,
 			%(key)s,
 			%(colour)s,
+			%(admin)s,
 			NOW()
 		);"""
 	
 	g.db_cur.execute(q, {
 		'handle' : handle,
 		'key' : desired_key,
+		'admin' : admin,
 		'colour' : gen_colour(),
 	})
 

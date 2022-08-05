@@ -82,6 +82,13 @@
               <MetaTagList/>
             </o-tab-item>
 
+            <o-tab-item
+              v-if="store.get_is_admin()"
+              value="admin"
+              label="Admin">
+              <Admin/>
+            </o-tab-item>
+
           </o-tabs>
         </div>
         <div
@@ -103,6 +110,7 @@ import FilterChooser from '@/components/FilterChooser.vue';
 import NavBar from '@/components/NavBar.vue';
 import UserList from '@/components/UserList.vue';
 import MetaTagList from '@/components/MetaTagList.vue';
+import Admin from '@/components/Admin.vue';
 
 const ARG_EQ = '=';
 const ARG_SEP = ',';
@@ -118,6 +126,7 @@ export default {
     NavBar,
     UserList,
     MetaTagList,
+    Admin,
   },
   data : function() {
     return {

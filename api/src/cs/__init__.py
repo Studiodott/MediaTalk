@@ -69,6 +69,7 @@ class LoginResource(Resource):
 		return {
 			'access_token' : access_token,
 			'colour' : u['colour'],
+			'admin' : u['admin'],
 		}, 200
 api.add_resource(LoginResource, '/api/login')
 
@@ -385,6 +386,19 @@ class IntegrationMediaUploadTestResource(Resource):
 		msg = 'Received:\n{}'.format(json.dumps(ret, indent=2))
 		return make_response(p.format(message=msg), 200, { "Content-Type" : "text/html" })
 api.add_resource(IntegrationMediaUploadTestResource, '/api/integration/test/media/upload')
+
+class AdminSyncResource(Resource):
+	decorators = [ jwt_required() ]
+
+	def post(self):
+		user_handle = get_jwt_identity()
+		u = user.get_by_handle(user_handle)
+		if u['admin']:
+			tasks.sync_gdrive.apply_async()
+		else:
+			return '', 400
+		return '', 201
+api.add_resource(AdminSyncResource, '/api/admin/sync')
 
 @app.route('/', methods=[ 'GET' ])
 def push_index():

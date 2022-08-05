@@ -11,6 +11,7 @@ create table "user" (
 	handle character varying(26) not null,
 	key character varying(64) not null,
 	colour character varying(64) not null,
+	admin boolean default false,
 	created_at timestamp not null,
 	primary key (id)
 );

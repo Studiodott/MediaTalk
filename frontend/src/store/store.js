@@ -37,7 +37,7 @@ export const Store = defineStore('Store', {
 			})
 			.then(resp => resp.json())
 			.then(auth => {
-				this.log_in(auth.access_token, email, auth.colour);
+				this.log_in(auth.access_token, email, auth.colour, auth.admin);
 				this.load();
 			})
 			.catch((error) => {
@@ -45,11 +45,14 @@ export const Store = defineStore('Store', {
 			});
 		},
 
-		log_in(v, key, colour) {
+		log_in(v, key, colour, admin) {
 			this.logged_in = true;
 			localStorage.access_token = v;
 			localStorage.access_key = key;
 			localStorage.access_my_colour = colour;
+			console.log("admin="+admin);
+			console.log(typeof admin);
+			localStorage.access_is_admin = admin;
 		},
 
 		log_out() {
@@ -57,6 +60,7 @@ export const Store = defineStore('Store', {
 			localStorage.removeItem('access_token');
 			localStorage.removeItem('access_key');
 			localStorage.removeItem('access_my_colour');
+			localStorage.removeItem('access_is_admin');
 		},
 
 		get_login_key() {
@@ -65,6 +69,10 @@ export const Store = defineStore('Store', {
 
 		get_my_colour() {
 			return this.logged_in ? localStorage.access_my_colour : undefined;
+		},
+
+		get_is_admin() {
+			return this.logged_in ? localStorage.access_is_admin == "true" : undefined;
 		},
 
 		async load() {
@@ -414,5 +422,22 @@ export const Store = defineStore('Store', {
 			}
 			return null;
 		},
+
+		async admin_request_sync() {
+			let u = `/api/admin/sync`;
+			let t = await window.fetch(api_target + u, {
+				method : 'POST',
+				headers : {
+					'Content-Type' : 'application/json',
+					'Authorization' : `Bearer ${localStorage.access_token}`,
+				},
+			}).catch((error) => {
+				console.log("error requesting sync: " + error);
+				this.logout();
+			});
+			return t;
+		},
+
+
 	},
 });
