@@ -40,6 +40,25 @@ def list(metatag_handle=None):
 	})
 	return g.db_cur.fetchall()
 
+def find(name):
+	q = """
+		SELECT
+			id,
+			handle,
+			name,
+			description,
+			created_at
+		FROM
+			tag
+		WHERE
+			name=%(name)s;
+		"""
+
+	g.db_cur.execute(q, {
+		'name' : name,
+	})
+	return g.db_cur.fetchone()
+
 def get(handle):
 	q = """
 		SELECT

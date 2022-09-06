@@ -7,7 +7,7 @@ from flask_cors import CORS
 from flask_restful import Resource, Api, reqparse, fields, marshal_with
 from flask_jwt_extended import JWTManager
 from flask_jwt_extended import ( create_access_token, set_access_cookies, jwt_required, get_jwt_identity )
-from celery import Celery
+from celery import Celery, chain
 import psycopg2
 import psycopg2.extras
 import json
@@ -312,6 +312,7 @@ integration_media_upload_parser.add_argument('media', type=werkzeug.datastructur
 integration_media_upload_parser.add_argument('media_type', type=str, required=True)
 integration_media_upload_parser.add_argument('handle', type=str, required=False)
 integration_media_upload_parser.add_argument('description', type=str)
+integration_media_upload_parser.add_argument('tag', type=str, action='append')
 p = """
 <html>
 <body>
@@ -326,14 +327,16 @@ p = """
 		<option value="AUDIO">AUDIO</option>
 		<option value="VIDEO">VIDEO</option>
 	</select></div>
-	<p>You may supply a unique handle for this media, to check for future duplicates.</p>
-	<p>If you supply one here, any future uploads with the same handle will not be processed.</p>
-	<p>This allows the uploader to work in batches with possible repetitions, without duplicates on the server.</p>
-	<p>If left blank, a unique handle will be generated.</p>
+	<p>The handle; You may supply a unique handle for this media, to check for future duplicates. If you supply one here, any future uploads with the same handle will not be processed. This allows the uploader to work in batches with possible repetitions, without duplicates on the server. If left blank, a unique handle will be generated.</p>
+	<p>Tags; any given tags will be applied as entire-document tags to the uploaded media, reusing ones which exist already or creating them if not, as an API-specific user which will also be reused-or-created. This form has three tag inputs but there's no real limit under the hood.</p>
 	<div><label for="handle">Your unique handle:</label>
 	<input type="text" name="handle" id="handle"></div>
 	<div><label for="description">Description:</label>
 	<input type="text" name="description" id="description"></div>
+	<div><label for="tag">Tags:</label></div>
+	<div><input type="text" name="tag" id="tag"></div>
+	<div><input type="text" name="tag" id="tag"></div>
+	<div><input type="text" name="tag" id="tag"></div>
 	<div><label for="media">Media file:</label>
 	<input type="file" name="media" id="media"></div>
 	<input type="submit" value="Upload">
@@ -341,7 +344,7 @@ p = """
 <pre>
 or with curl:
 
-curl -X POST -F media_type=TEXT -F handle=your_handle -F description="a description" -F media=@your_file THIS_URL
+curl -X POST -F media_type=TEXT -F handle=your_handle -F description="a description" -F tag=first_tag -F tag=second_tag -F media=@your_file THIS_URL
 </pre>
 </body>
 </html>
@@ -354,12 +357,16 @@ class IntegrationMediaUploadResource(Resource):
 
 	def post(self):
 		args = integration_media_upload_parser.parse_args()
-		handle = args['handle'] if ('handle' in args and len(args['handle'])) else str(ULID())
+		handle = args['handle'] if ('handle' in args and args['handle'] and len(args['handle'])) else str(ULID())
+		tag_list = list(filter(lambda t: len(t) > 0, args['tag']))
 		dest = os.path.join(app.config['UPLOAD_DIR'], args['media'].filename)
 		assert args['media_type'] in [ 'TEXT', 'IMAGE', 'AUDIO', 'VIDEO' ]
 		D("saving to {}".format(dest))
 		args['media'].save(dest)
-		tasks.sync_local_file.delay(dest, args['media'].filename, args['media_type'], handle, args['description'])
+		task_sync = tasks.sync_local_file.s(dest, args['media'].filename, args['media_type'], handle, args['description'])
+		task_add_tags = tasks.media_add_tags.s(tag_list)
+		chain(task_sync, task_add_tags)()
+
 		return '', 201
 api.add_resource(IntegrationMediaUploadResource, '/api/integration/media/upload')
 
@@ -370,10 +377,20 @@ class IntegrationMediaUploadTestResource(Resource):
 
 	def post(self):
 		args = integration_media_upload_parser.parse_args()
+		tag_list = list(filter(lambda t: len(t) > 0, args['tag']))
+
+		D(args)
 		handle = args['handle'] if ('handle' in args and len(args['handle'])) else str(ULID())
 		assert args['media_type'] in [ 'TEXT', 'IMAGE', 'AUDIO', 'VIDEO' ]
 		dest = os.path.join(app.config['UPLOAD_DIR'], args['media'].filename)
 		args['media'].save(dest)
+		print(f"calling tasks")
+		task_stub = tasks.sync_stub.s(dest, args['media'].filename, args['media_type'], handle, args['description'])
+		D(tag_list)
+		task_add_tags = tasks.media_add_tags.s(tag_list)
+		chain(task_stub, task_add_tags)()
+		print(f"done calling tasks")
+
 		ret = {
 			'status' : 'looks good!',
 			'filename' : args['media'].filename,
@@ -381,6 +398,7 @@ class IntegrationMediaUploadTestResource(Resource):
 			'handle' : handle,
 			'description' : args['description'],
 			'filesize' : os.stat(dest).st_size,
+			'tag' : args['tag'],
 		}
 		os.remove(dest)
 		msg = 'Received:\n{}'.format(json.dumps(ret, indent=2))

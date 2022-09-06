@@ -1,5 +1,5 @@
 from cs import app, celery_app, socketio
-from cs.model import setup, media
+from cs.model import setup, media, tag, tagging, user
 import time
 import ffmpeg
 import statistics
@@ -100,6 +100,90 @@ def process_audio(in_file_name, out_file):
 	# and dish it out to a PNG file
 	img = png.Writer(w, h, palette=palette, bitdepth=1)
 	img.write(out_file, pixels)
+
+@celery_app.task
+def sync_stub(_path, name, _type, upstream_handle, description):
+
+	from flask import g
+
+	with app.app_context():
+		setup.db_setup()
+		ret = sync_stub_real(_path, name, _type, upstream_handle, description)
+		g.db_commit = True
+		setup.db_wrapup(False)
+		return ret
+
+@celery_app.task
+def sync_stub_real(_path, name, _type, upstream_handle, description):
+
+	for i in range(3):
+		print(f"naptime")
+		time.sleep(1)
+
+	print(f"wakeup")
+	return "pony"
+
+@celery_app.task
+def sync_stubmore(a):
+
+	from flask import g
+
+	print(f"arg={a}")
+
+	with app.app_context():
+		setup.db_setup()
+		sync_stubmore_real(a)
+		g.db_commit = True
+		setup.db_wrapup(False)
+
+@celery_app.task
+def sync_stubmore_real(a):
+
+	print(f"sync_stubmore_real")
+	print(f"arg={a}")
+	for i in range(3):
+		print(f"naptime")
+		time.sleep(1)
+
+	print(f"wakeup")
+	return True
+
+
+@celery_app.task
+def media_add_tags(media_handle, tags):
+
+	from flask import g
+
+	print(f"media_add_tags(media_handle={media_handle} tags={tags})")
+
+	with app.app_context():
+		setup.db_setup()
+		media_add_tags_real(media_handle, tags)
+		g.db_commit = True
+		setup.db_wrapup(False)
+
+@celery_app.task
+def media_add_tags_real(media_handle, tags):
+
+	api_user_key = 'added_by_API'
+	tagging_range = json.dumps({ 'what' : 'all' })
+
+	u = user.get_by_key(api_user_key)
+	if not u:
+		new_user_handle = user.create(api_user_key)
+		u = user.get_by_key(api_user_key)
+		socketio.emit('user_created', u)
+	user_handle = u['handle']
+
+	for t in tags:
+		existing_tag = tag.find(t)
+		if not existing_tag:
+			tag_handle = tag.create(t, '')
+			socketio.emit('tag_created', tag.get(tag_handle), broadcast=True)
+		else:
+			tag_handle = existing_tag['handle']
+		tagging_handle = tagging.create(media_handle, tag_handle, user_handle, tagging_range)
+		socketio.emit('tagging_created', tagging.get(tagging_handle))
 
 @celery_app.task
 def sync_gdrive():
@@ -282,9 +366,10 @@ def sync_local_file(_path, name, _type, upstream_handle, description):
 
 	with app.app_context():
 		setup.db_setup()
-		sync_local_file_real(_path, name, _type, upstream_handle, description)
+		ret = sync_local_file_real(_path, name, _type, upstream_handle, description)
 		g.db_commit = True
 		setup.db_wrapup(False)
+		return ret
 
 @celery_app.task
 def sync_local_file_real(_path, name, _type, upstream_handle, description):
@@ -304,6 +389,7 @@ def sync_local_file_real(_path, name, _type, upstream_handle, description):
 
 	fdesc = {
 		'filename' : name,
+		'hande' : None,
 		'path' : _path,
 		'media_type' : _type,
 		'upstream_handle' : upstream_handle,
@@ -369,13 +455,13 @@ def sync_local_file_real(_path, name, _type, upstream_handle, description):
 		fdesc['status'] = 'failed'
 		raise e
 	else:
-		handle = media.create(fdesc)
+		fdesc['handle'] = media.create(fdesc)
 		g.db_con.commit()
-		socketio.emit('media_created', media.get(handle), broadcast=True)
+		socketio.emit('media_created', media.get(fdesc['handle']), broadcast=True)
 	finally:
 		os.remove(_path)
 		for what, where in temp_files.items():
 			print(f"removing temp_file {where.name} for {what}")
 			os.remove(where.name)
 
-	return True
+	return fdesc['handle']
