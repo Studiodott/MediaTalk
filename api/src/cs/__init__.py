@@ -384,12 +384,6 @@ class IntegrationMediaUploadTestResource(Resource):
 		assert args['media_type'] in [ 'TEXT', 'IMAGE', 'AUDIO', 'VIDEO' ]
 		dest = os.path.join(app.config['UPLOAD_DIR'], args['media'].filename)
 		args['media'].save(dest)
-		print(f"calling tasks")
-		task_stub = tasks.sync_stub.s(dest, args['media'].filename, args['media_type'], handle, args['description'])
-		D(tag_list)
-		task_add_tags = tasks.media_add_tags.s(tag_list)
-		chain(task_stub, task_add_tags)()
-		print(f"done calling tasks")
 
 		ret = {
 			'status' : 'looks good!',
