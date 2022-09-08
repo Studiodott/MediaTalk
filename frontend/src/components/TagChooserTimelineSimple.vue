@@ -78,15 +78,13 @@ export default {
     return {
       chosenTags : [],
       comment : '',
-      filteredTags : this.store.live.tags,
-
+      filteredTags : [],  // no dropdown on initial click
+      //filteredTags : this.store.live.tags,  // populated dropdown on initial click
       mode : 'all',
-
       selected : undefined,
       selected_at : undefined,
       selected_from : undefined,
       selected_to : undefined,
-
       press_ctx : undefined,
     };
   },
@@ -196,6 +194,11 @@ export default {
       this.$emit('selected', arg);
     },
     getFilteredTags(search) {
+      // when empty, don't show the dropdown
+      if (search.length == 0) {
+        this.filteredTags = [];
+        return;
+      }
       this.filteredTags = this.store.live.tags.filter(tag => {
         return (
           tag.name.toString().toLowerCase().indexOf(search.toLowerCase()) >= 0
