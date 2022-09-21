@@ -1,5 +1,5 @@
 from cs import app, celery_app, socketio
-from cs.model import setup, media, tag, tagging, user
+from cs.model import setup, media, tag, tagging, user, config
 import time
 import ffmpeg
 import statistics
@@ -15,16 +15,8 @@ from tempfile import NamedTemporaryFile
 from os import path
 from apiclient import discovery, http
 
-def db_load(path):
-	try:
-		with open(path, 'r') as f:
-			return json.loads(f.read())
-	except:
-		return { 'files' : [] }
-
-def db_save(db, path):
-	with open(path, 'w') as f:
-		f.write(json.dumps(db, indent=2))
+PATH_ORIGINAL = 'original' 
+PATH_GENERATED = 'generated' 
 
 def hash_file(filepath):
 
@@ -102,54 +94,6 @@ def process_audio(in_file_name, out_file):
 	img.write(out_file, pixels)
 
 @celery_app.task
-def sync_stub(_path, name, _type, upstream_handle, description):
-
-	from flask import g
-
-	with app.app_context():
-		setup.db_setup()
-		ret = sync_stub_real(_path, name, _type, upstream_handle, description)
-		g.db_commit = True
-		setup.db_wrapup(False)
-		return ret
-
-@celery_app.task
-def sync_stub_real(_path, name, _type, upstream_handle, description):
-
-	for i in range(3):
-		print(f"naptime")
-		time.sleep(1)
-
-	print(f"wakeup")
-	return "pony"
-
-@celery_app.task
-def sync_stubmore(a):
-
-	from flask import g
-
-	print(f"arg={a}")
-
-	with app.app_context():
-		setup.db_setup()
-		sync_stubmore_real(a)
-		g.db_commit = True
-		setup.db_wrapup(False)
-
-@celery_app.task
-def sync_stubmore_real(a):
-
-	print(f"sync_stubmore_real")
-	print(f"arg={a}")
-	for i in range(3):
-		print(f"naptime")
-		time.sleep(1)
-
-	print(f"wakeup")
-	return True
-
-
-@celery_app.task
 def media_add_tags(media_handle, tags):
 
 	from flask import g
@@ -199,72 +143,62 @@ def sync_gdrive():
 @celery_app.task
 def sync_gdrive_real():
 
-	path_original = path.join(os.environ['CONF_APP_MEDIA_PATH'], 'original')
-	path_generated = path.join(os.environ['CONF_APP_MEDIA_PATH'], 'generated')
+	c = config.get_all()
 
-	api_key = os.environ['CONF_DRIVE_API_KEY']
-	folder_id = os.environ['CONF_DRIVE_FOLDER_ID']
+	# don't do this if there's no config
+	try:
+		for k in [ 'S3_URL', 'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY', 'DRIVE_API_KEY', 'DRIVE_FOLDER_ID' ]:
+			assert c[k] and len(c[k]) > 0
+	except Exception as e:
+		socketio.emit('sync_status', { 'error' : True, 'message' : 'configuration not complete' }, broadcast=True)
+		return False
 
-	aws_resource = boto3.resource('s3')
-	aws_bucket = os.environ['CONF_AWS_BUCKET']
-	aws_region = os.environ['CONF_AWS_REGION']
+	# try to open up S3
+	try:
+		s3_client = boto3.client(
+			's3',
+			endpoint_url = c['S3_URL'],
+			aws_access_key_id = c['S3_ACCESS_KEY_ID'],
+			aws_secret_access_key = c['S3_SECRET_ACCESS_KEY']
+		)
+	except Exception as e:
+		socketio.emit('sync_status', { 'error' : True, 'message' : 'could not talk to S3' }, broadcast=True)
+		return False
 
-	print(f'talking to folder_id={folder_id} as api_key={api_key}')
+	"""
+	try to open up the Drive, and get a list of files we can find there
+	"""
 	try:
 		# set up the sync
-		drive_service = discovery.build('drive', 'v3', developerKey=api_key)
+		drive_service = discovery.build('drive', 'v3', developerKey=c['DRIVE_API_KEY'])
 
-		# get a remote file list
+		# get a remote file list, skipping folders
 		param = {
-			'q' : f"'{folder_id}' in parents and mimeType != 'application/vnd.google-apps.folder'",
+			'q' : f"'{c['DRIVE_FOLDER_ID']}' in parents and mimeType != 'application/vnd.google-apps.folder'",
 		}
 		drive_result = drive_service.files().list(**param).execute()
 		drive_files = drive_result.get('files')
-		"""
-		drive_files = [
-			{
-				'id' : '01G22CEZVY1NP1YS5V3J8SH1NK',
-				'name' : 'image_koeln.jpg',
-				'mimeType' : 'image/jpg',
-			},
-			{
-				'id' : '01G22CF3D1T8YMA28HPTBRZYH2',
-				'name' : 'text_lorem-ipsum.txt',
-				'mimeType' : 'text/foo',
-			},
-			{
-				'id' : '01G22CF4HPXPHCRMP2X4PW997W',
-				'name' : 'audio_jazzy.mp4',
-				'mimeType' : 'audio/mp4',
-			},
-			{
-				'id' : '01G22CF6DY3PM86BT9J7385NXF',
-				'name' : 'video_owl.mp4',
-				'mimeType' : 'video/mp4',
-			},
-			{
-				'id' : '01G22CF769DSC68ZKS8SK5SZGS',
-				'name' : 'BoldDimIbis.mp4',
-				'mimeType' : 'video/mp4',
-			},
-		]
-		"""
 	except Exception as e:
-		print(f"error while setting up drive: {e}")
+		socketio.emit('sync_status', { 'error' : True, 'message' : 'could not connect to Drive' }, broadcast=True)
 		return False
 
+	"""
+	loop over the found files, checking if we know them already, processing if not
+	"""
 	print(f"found {len(drive_files)} on this drive")
 	for f in drive_files:
 		print(f"inspecting {f['name']}")
-		existing_file = media.find_by_upstream_handle(f['id'])
 
+		# do we have this file already?
+		existing_file = media.find_by_upstream_handle(f['id'])
 		if existing_file:
 			print(f"  already exists, skipping...")
 			continue
 
+		# block of file info we want to keep
 		fdesc = {
 			'filename' : f['name'],
-			'path' : path.join(path_original, f['name']),
+			'path' : path.join(PATH_ORIGINAL, f['name']),
 			'media_type' : 'unknown',
 			'upstream_handle' : f['id'],
 			'size_bytes' : None,
@@ -276,6 +210,8 @@ def sync_gdrive_real():
 
 		temp_files = {}
 
+		# try to download the file from Drive, process if (if needed),
+		# and push it to S3
 		try:
 
 			# figure out its type, trust upstream on this
@@ -284,22 +220,19 @@ def sync_gdrive_real():
 			# set up a temp file for this
 			temp_files['original'] = NamedTemporaryFile(delete=False)
 
-			print(f"handling as temp file {temp_files['original'].name}")
-
 			# commence download
 			fdesc['status'] = 'downloading'
 			drive_req = drive_service.files().get_media(fileId=f['id'])
-
 			drive_downloader = http.MediaIoBaseDownload(temp_files['original'], drive_req)
 			done = False
 			while not done:
+				# download next chunk
 				status, done = drive_downloader.next_chunk()
+
+			# downloaded, close it up
 			temp_files['original'].close()
-			"""
-			shutil.copyfile(path.join('/tmp/in', f['name']), temp_files['original'].name)
-			"""
 
-
+			# find out and remember its size
 			stats = os.stat(temp_files['original'].name)
 			fdesc['size_bytes'] = stats.st_size
 			print(f"  saved {stats.st_size} bytes")
@@ -308,9 +241,11 @@ def sync_gdrive_real():
 			fdesc['status'] = 'hashing'
 			fdesc['checksum'] = hash_file(temp_files['original'].name)
 
-			# handle it
+			# if it is a file we need to process (generate a waveform),
+			# attempt to do so now, adding any generated files to temp_files
 			try:
 				fdesc['status'] = 'processing'
+				# only do this for files with audio data
 				if fdesc['media_type'] in [ 'AUDIO', 'VIDEO' ]:
 					temp_files['waveform'] = NamedTemporaryFile(delete=False)
 					process_audio(temp_files['original'].name, temp_files['waveform'])
@@ -318,44 +253,74 @@ def sync_gdrive_real():
 			except Exception as e:
 				print(f"error processing file: {e}")
 
-			# upload the original
+			# upload the original to S3
 			with open(temp_files['original'].name, 'rb') as f:
+				s3_path = path.join(
+					'original',
+					fdesc['checksum']
+				)
+				s3_client.put_object(
+					Body=f,
+					Bucket=c['S3_BUCKET'],
+					Key=s3_path
+				)
+				fdesc['url_original'] = f"{c['S3_URL']}/{c['S3_BUCKET']}/{s3_path}"
+
+				"""
 				aws_path = path.join(
-					os.environ['CONF_APP_MEDIA_PATH'],
 					'original',
 					fdesc['checksum']
 				)
 				aws_resource.Bucket(aws_bucket).put_object(
 					Key=aws_path, Body=f)
-				fdesc['url_original'] = f"https://{aws_bucket}.s3.{aws_region}.amazonaws.com/{aws_path}"
+				fdesc['url_original'] = f"https://{aws_bucket}.s3.{aws_region}.amazonaws.com/{aws_path}"a
+				"""
 
 			# upload the waveform, if existing
 			if 'waveform' in temp_files:
 				with open(temp_files['waveform'].name, 'rb') as f:
+					s3_path = path.join(
+						'generated',
+						f"{fdesc['checksum']}_waveform"
+					)
+					s3_client.put_object(
+						Body=f,
+						Bucket=c['S3_BUCKET'],
+						Key=s3_path
+					)
+					fdesc['url_description'] = f"{c['S3_URL']}/{c['S3_BUCKET']}/{s3_path}"
+
+					"""
 					aws_path = path.join(
-						os.environ['CONF_APP_MEDIA_PATH'],
 						'generated',
 						f"{fdesc['checksum']}_waveform"
 					)
 					aws_resource.Bucket(aws_bucket).put_object(
 						Key=aws_path, Body=f)
 					fdesc['url_description'] = f"https://{aws_bucket}.s3.{aws_region}.amazonaws.com/{aws_path}"
+					"""
 			else:
 				fdesc['url_description'] = ''
 
+			# finally done
 			fdesc['status'] = 'ok'
+
 		except IOError as e:
-			print(f"ERROR {e}")
+			socketio.emit('sync_status', { 'error' : True, 'message' : str(e) }, broadcast=True)
 			fdesc['error'] = f"while {fdesc['status']}: {e}"
 			fdesc['status'] = 'failed'
 		else:
+			# all went well, save  it database and broadcast this new file
 			handle = media.create(fdesc)
 			g.db_con.commit()
 			socketio.emit('media_created', media.get(handle), broadcast=True)
 		finally:
+			# in any case, clean up
 			for what, where in temp_files.items():
 				print(f"removing temp_file {where.name} for {what}")
 				os.remove(where.name)
+
+	socketio.emit('sync_status', { 'error' : False, 'message' : f"synced {len(drive_files)} files" }, broadcast=True)
 
 	return True
 
@@ -374,15 +339,28 @@ def sync_local_file(_path, name, _type, upstream_handle, description):
 @celery_app.task
 def sync_local_file_real(_path, name, _type, upstream_handle, description):
 
-	path_original = path.join(os.environ['CONF_APP_MEDIA_PATH'], 'original')
-	path_generated = path.join(os.environ['CONF_APP_MEDIA_PATH'], 'generated')
+	c = config.get_all()
 
-	aws_resource = boto3.resource('s3')
-	aws_bucket = os.environ['CONF_AWS_BUCKET']
-	aws_region = os.environ['CONF_AWS_REGION']
+	# don't do this if there's no config
+	try:
+		for k in [ 'S3_URL', 'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY', 'DRIVE_API_KEY', 'DRIVE_FOLDER_ID' ]:
+			assert c[k] and len(c[k]) > 0
+	except Exception as e:
+		socketio.emit('sync_status', { 'error' : True, 'message' : 'configuration not complete' }, broadcast=True)
+		return False
+
+	try:
+		s3_client = boto3.client(
+			's3',
+			endpoint_url = c['S3_URL'],
+			aws_access_key_id = c['S3_ACCESS_KEY_ID'],
+			aws_secret_access_key = c['S3_SECRET_ACCESS_KEY']
+		)
+	except Exception as e:
+		socketio.emit('sync_status', { 'error' : True, 'message' : 'could not talk to S3' }, broadcast=True)
+		return False
 
 	existing_file = media.find_by_upstream_handle(upstream_handle)
-
 	if existing_file:
 		print(f"  already exists, skipping...")
 		return
@@ -424,33 +402,37 @@ def sync_local_file_real(_path, name, _type, upstream_handle, description):
 
 		# upload the original
 		with open(_path, 'rb') as f:
-			aws_path = path.join(
-				os.environ['CONF_APP_MEDIA_PATH'],
+			s3_path = path.join(
 				'original',
 				fdesc['checksum']
 			)
-			aws_resource.Bucket(aws_bucket).put_object(
-				Key=aws_path, Body=f)
-			fdesc['url_original'] = f"https://{aws_bucket}.s3.{aws_region}.amazonaws.com/{aws_path}"
+			s3_client.put_object(
+				Body=f,
+				Bucket=c['S3_BUCKET'],
+				Key=s3_path
+			)
+			fdesc['url_original'] = f"{c['S3_URL']}/{c['S3_BUCKET']}/{s3_path}"
 
 		# upload the waveform, if existing
 		if 'waveform' in temp_files:
 			with open(temp_files['waveform'].name, 'rb') as f:
-				aws_path = path.join(
-					os.environ['CONF_APP_MEDIA_PATH'],
+				s3_path = path.join(
 					'generated',
 					f"{fdesc['checksum']}_waveform"
 				)
-				aws_resource.Bucket(aws_bucket).put_object(
-					Key=aws_path, Body=f)
-				fdesc['url_description'] = f"https://{aws_bucket}.s3.{aws_region}.amazonaws.com/{aws_path}"
+				s3_client.put_object(
+					Body=f,
+					Bucket=c['S3_BUCKET'],
+					Key=s3_path
+				)
+				fdesc['url_description'] = f"{c['S3_URL']}/{c['S3_BUCKET']}/{s3_path}"
 		else:
 			fdesc['url_description'] = ''
 
 		fdesc['status'] = 'ok'
 
 	except IOError as e:
-		print(f"ERROR {e}")
+		socketio.emit('sync_status', { 'error' : True, 'message' : str(e) }, broadcast=True)
 		fdesc['error'] = f"while {fdesc['status']}: {e}"
 		fdesc['status'] = 'failed'
 		raise e
@@ -464,4 +446,5 @@ def sync_local_file_real(_path, name, _type, upstream_handle, description):
 			print(f"removing temp_file {where.name} for {what}")
 			os.remove(where.name)
 
+	socketio.emit('sync_status', { 'error' : False, 'message' : f"synced 1 file" }, broadcast=True)
 	return fdesc['handle']

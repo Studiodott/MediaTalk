@@ -438,6 +438,41 @@ export const Store = defineStore('Store', {
 			return t;
 		},
 
+		async admin_config_get() {
+			let u = `/api/admin/config`;
+			let t = await window.fetch(api_target + u, {
+				headers : {
+					'Authorization' : `Bearer ${localStorage.access_token}`,
+				},
+			})
+			.then(resp => resp.json())
+			.catch((error) => {
+				console.log("error loading config: " + error);
+				this.logout();
+			});
+			return t;
+		},
+
+		async admin_config_set(k, v) {
+			let u = `/api/admin/config`;
+			let t = await window.fetch(api_target + u, {
+				method : 'POST',
+				headers : {
+					'Content-Type' : 'application/json',
+					'Authorization' : `Bearer ${localStorage.access_token}`,
+				},
+				body : JSON.stringify({
+					'key' : k,
+					'value' : v,
+				}),
+			})
+			.then(resp => resp.json())
+			.catch((error) => {
+				console.log("error loading config: " + error);
+				this.logout();
+			});
+			return t;
+		}
 
 	},
 });

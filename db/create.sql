@@ -1,3 +1,4 @@
+drop table if exists "config";
 drop table if exists "tagging";
 drop table if exists "metatag_tag";
 drop table if exists "tag";
@@ -143,3 +144,15 @@ create table "tagging"
 );
 create unique index tagging_handle_idx on tagging (handle);
 
+create table "config"
+(
+	"key" character varying(128) not null,
+	"value" character varying(128),
+	primary key (key)
+);
+insert into "config" ("key", "value") values ('DRIVE_API_KEY', null);
+insert into "config" ("key", "value") values ('DRIVE_FOLDER_ID', null);
+insert into "config" ("key", "value") values ('S3_ACCESS_KEY_ID', null);
+insert into "config" ("key", "value") values ('S3_SECRET_ACCESS_KEY', null);
+insert into "config" ("key", "value") values ('S3_BUCKET', null);
+insert into "config" ("key", "value") values ('S3_URL', null);

@@ -11,16 +11,19 @@
       <o-button
         @click="sync_gdrive">Synchronise from drive
       </o-button>
+      <AdminConfig/>
     </div>
   </div>
 </template>
 
 <script>
 import { Store } from '@/store/store.js';
+import AdminConfig from '@/components/AdminConfig.vue';
 
 export default {
   name : 'Admin',
   components : {
+    AdminConfig,
   },
   data : function() {
     return {

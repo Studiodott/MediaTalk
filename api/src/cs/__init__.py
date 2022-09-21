@@ -8,6 +8,7 @@ from flask_restful import Resource, Api, reqparse, fields, marshal_with
 from flask_jwt_extended import JWTManager
 from flask_jwt_extended import ( create_access_token, set_access_cookies, jwt_required, get_jwt_identity )
 from celery import Celery, chain
+from celery.schedules import crontab
 import psycopg2
 import psycopg2.extras
 import json
@@ -43,8 +44,16 @@ def output_json(data, code, headers=None):
 	resp.headers.extend(headers or {})
 	return resp
 
-from cs.model import setup, media, tag, tagging, logic, user, metatag
+from cs.model import setup, media, tag, tagging, logic, user, metatag, config
 from cs.background import tasks
+
+@celery_app.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+
+	sender.add_periodic_task(
+		crontab(hour=0),
+		tasks.sync_gdrive.s()
+	)
 
 login_fields = {
 	'access_token' : fields.String,
@@ -306,6 +315,23 @@ class SearchResource(Resource):
 			tag_handles_and=args['tag_handles_and'],
 			user_handles_and=args['user_handles_and']), 200
 api.add_resource(SearchResource, '/api/search')
+
+config_parser = reqparse.RequestParser()
+config_parser.add_argument('key', type=str, required=True)
+config_parser.add_argument('value', type=str, required=True)
+class ConfigResource(Resource):
+	decorators = [ jwt_required() ]
+
+	def get(self):
+		return config.get_all(), 200
+
+	def post(self):
+		args = config_parser.parse_args()
+		config.set(args['key'], args['value'])
+		g.db_commit = True
+		return config.get_all(), 200
+
+api.add_resource(ConfigResource, '/api/admin/config')
 
 integration_media_upload_parser = reqparse.RequestParser()
 integration_media_upload_parser.add_argument('media', type=werkzeug.datastructures.FileStorage, location='files', required=True)
