@@ -1,17 +1,45 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
   <div
-    ref="image_container"
-    id="image_container">
-    <img
-      :src="src"
-      id="actual_image"
-      @load="image_loaded"
-      ref="actual_image"/>
-    <canvas
-      ref="selection_layer"
-      id="selection_layer"/>
+    id="description">
+    <div
+      class="content">
+      <ul>
+        <li
+          v-for="(highlight, highlight_index) in highlights.taggings">
+          <span
+            v-if="highlight.position.what == 'range'">
+            A selection from {{ parseInt(highlight.position.from.x * 100) }}%x{{ parseInt(highlight.position.from.y * 100) }}% to {{ parseInt(highlight.position.to.x * 100) }}%x{{ parseInt(highlight.position.to.y * 100) }}%.
+          </span>
+          <span
+            v-if="highlight.position.what == 'point'">
+            At the point {{ parseInt(highlight.position.at.x * 100) }}%x{{ parseInt(highlight.position.at.y * 100) }}%.
+          </span>
+          <span
+            v-if="highlight.position.what == 'all'">
+            Entire image.
+          </span>
+          <span
+            v-if="highlight.comment && highlight.comment.length">
+            Comment: <b>"{{ highlight.comment }}"</b>
+          </span>
+        </li>
+      </ul>
+    </div>
+    <div
+      ref="image_container"
+      id="image_container">
+      <img
+        :src="src"
+        id="actual_image"
+        @load="image_loaded"
+        ref="actual_image"/>
+      <canvas
+        ref="selection_layer"
+        id="selection_layer"/>
+    </div>
   </div>
+
 </template>
 
 <script>

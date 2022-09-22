@@ -41,6 +41,7 @@
         id="timing_timeline"/>
     </div>
     <div
+    class="content"
       id="description">
       <ul>
         <li
@@ -51,15 +52,15 @@
           </span>
           <span
             v-if="highlight.position.what == 'point'">
-            At {{ highlight.position.at }}sec
+            At {{ highlight.position.at }}sec.
           </span>
           <span
             v-if="highlight.position.what == 'all'">
-            Entire media
+            Entire clip.
           </span>
           <span
             v-if="highlight.comment && highlight.comment.length">
-            Comment: <b>{{ highlight.comment }}</b>
+            Comment: <b>"{{ highlight.comment }}"</b>
           </span>
         </li>
       </ul>

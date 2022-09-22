@@ -18,10 +18,12 @@
       <div
         class="column is-flex is-flex-direction-column is-align-items-stretch">
         <div
+          class="block"
           v-for="(taggings, tag_handle, tag_index) in getTaggingsForMedia">
-          <p>
+          <h2
+            class="subtitle">
             Tag "<b>{{ get_tag_name(tag_handle) }}</b>"
-          </p>
+          </h2>
           <div
             v-if="media_type == 'VIDEO'">
             <MediaPrintVideo
