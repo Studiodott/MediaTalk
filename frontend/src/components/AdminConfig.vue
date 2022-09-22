@@ -2,46 +2,42 @@
 <template>
   <o-field
     horizontal
+    message="The ID of the (publically shared) Google Drive folder I should read, found f.e. in a sharing URL."
     label="Drive folder ID">
     <o-input
       v-model="config.DRIVE_FOLDER_ID"/>
   </o-field>
   <o-field
     horizontal
+    message="An API key, can be created on your Google Cloud console (APIs & Services, Credentials, Create Credentials)."
     label="Drive API key">
     <o-input
       v-model="config.DRIVE_API_KEY"/>
   </o-field>
   <o-field
     horizontal
+    message="The ID of your key at your chosen S3 provider (Amazon, Wasabi, ...)."
     label="S3 access key ID">
     <o-input
       v-model="config.S3_ACCESS_KEY_ID"/>
   </o-field>
   <o-field
     horizontal
+    message="The secret part of your key at your chosen S3 provider."
     label="S3 secret access key">
     <o-input
       v-model="config.S3_SECRET_ACCESS_KEY"/>
   </o-field>
   <o-field
     horizontal
+    message="The endpoint your bucket lives on (f.e. https://s3.eu-central-1.amazonaws.com or https://s3.us-east-1.wasabisys.com)."
     label="S3 endpoint URL">
-    <div
-      class="is-flex is-flex-direction-column">
-      <o-input
-        class="w-full"
-        v-model="config.S3_URL"/>
-      <p>For example:
-        <ul>
-          <li><i>https://s3.eu-central-1.amazonaws.com</i></li>
-          <li><i>https://s3.eu-central-1.wasabisys.com</i></li>
-        </ul>
-      </p>
-    </div>
+    <o-input
+      v-model="config.S3_URL"/>
   </o-field>
   <o-field
     horizontal
+    message="The name of your S3 bucket."
     label="S3 bucket">
     <o-input
       v-model="config.S3_BUCKET"/>
