@@ -68,8 +68,7 @@ class LoginResource(Resource):
 		args = login_parser.parse_args()
 		u = user.get_by_key(args['key'])
 		if not u:
-			print(f'created')
-			handle = user.create(args['key'])
+			handle = user.create(args['key'], admin=True if user.count() == 0 else False)
 			u = user.get_by_handle(handle)
 			socketio.emit('user_created', u)
 		print(f'got u={u}')
