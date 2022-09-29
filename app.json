@@ -1,0 +1,33 @@
+{
+  "name": "City Story",
+  "description": "Studio Dott's multimedia tagging tool",
+  "scripts": {},
+  "env": {
+    "NPM_CONFIG_PRODUCTION": "true",
+    "YARN_PRODUCTION": "true"
+  },
+  "formation": {
+    "worker": {
+      "quantity": 1
+    },
+    "web": {
+      "quantity": 1
+    }
+  },
+  "addons": [
+    "heroku-postgresql",
+    "heroku-redis"
+  ],
+  "buildpacks": [
+    {
+      "url": "https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git"
+    },
+    {
+      "url": "heroku/python"
+    },
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "stack": "heroku-22"
+}
