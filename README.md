@@ -93,7 +93,7 @@ We can now install and configure City Story.
 
 You can install City Story by pressing this button:
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Studiodott/citystory)
 
 If you don't have an account with Heroku, you can create one during this process.
 
