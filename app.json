@@ -1,10 +1,14 @@
 {
   "name": "City Story",
   "description": "Studio Dott's multimedia tagging tool",
-  "scripts": {},
+  "scripts": {
+    "postdeploy": "db/create.sh"
+  },
   "env": {
-    "NPM_CONFIG_PRODUCTION": "true",
-    "YARN_PRODUCTION": "true"
+    "CONF_APP_SECRET": {
+      "generator": "secret"
+    },
+    "NPM_CONFIG_PRODUCTION": "false"
   },
   "formation": {
     "worker": {
