@@ -7,6 +7,47 @@
       <section>
         <h2
           class="subtitle">
+          Users
+        </h2>
+        <o-notification>
+          These are your users, you can promote them to administrator (just like yourself) here.
+        </o-notification>
+        <div
+          class="is-flex is-flex-direction-column mb-2">
+          <div
+            v-for="u in store.live.users">
+            <div
+              :style="'background: ' + u.colour + ';'"
+              class="mt-2 p-2 is-flex is-flex-direction-row is-justify-content-space-between is-align-items-baseline">
+              <span
+                :style="'background: ' + u.colour + ';'">
+                {{ u.key }}
+              </span>
+              <div
+                v-if="u.key != store.get_login_key()">
+                <o-button
+                  v-if="u.admin"
+                  @click="admin_user_admin_disable(u.key)">
+                  unmake admin
+                </o-button>
+                <o-button
+                  v-else
+                  @click="admin_user_admin_enable(u.key)">
+                  make admin
+                </o-button>
+              </div>
+              <div
+                v-else>
+                (that's you!)
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+      <section>
+        <h2
+          class="subtitle">
           Configuration
         </h2>
         <o-notification>
@@ -66,6 +107,12 @@ export default {
     sync_gdrive : function() {
       console.log("ordering sync");
       this.store.admin_request_sync();
+    },
+    admin_user_admin_enable : function(key) {
+      this.store.admin_user_set(key, true);
+    },
+    admin_user_admin_disable : function(key) {
+      this.store.admin_user_set(key, false);
     },
   },
   computed : {

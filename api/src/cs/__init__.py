@@ -85,11 +85,13 @@ user_fields = {
 	'handle' : fields.String,
 	'key' : fields.String,
 	'colour' : fields.String,
+	'admin' : fields.Boolean,
 	'created_at' : fields.DateTime(dt_format='iso8601'),
 }
 user_list_fields = {
 	'users' : fields.List(fields.Nested(user_fields)),
 }
+
 class UserManagerResource(Resource):
 	decorators = [ jwt_required() ]
 
@@ -97,8 +99,8 @@ class UserManagerResource(Resource):
 	def get(self):
 		l = user.list()
 		return { 'users' : l }, 200
-api.add_resource(UserManagerResource, '/api/user')
 
+api.add_resource(UserManagerResource, '/api/user')
 
 media_fields = {
 	'handle' : fields.String,
@@ -436,6 +438,37 @@ class AdminSyncResource(Resource):
 			return '', 400
 		return '', 201
 api.add_resource(AdminSyncResource, '/api/admin/sync')
+
+user_parser = reqparse.RequestParser()
+user_parser.add_argument('admin', type=bool, required=True)
+class AdminUserResource(Resource):
+	decorators = [ jwt_required() ]
+
+	@marshal_with(user_fields)
+	def get(self, key):
+		calling_user_handle = get_jwt_identity()
+		calling_user = user.get_by_handle(calling_user_handle)
+		if not calling_user['admin']:
+			return '', 400
+		dest_user = user.get_by_key(key)
+		if not dest_user:
+			return '', 404
+		return dest_user, 200
+
+	def post(self, key):
+		calling_user_handle = get_jwt_identity()
+		calling_user = user.get_by_handle(calling_user_handle)
+		if not calling_user['admin']:
+			return '', 400
+		args = user_parser.parse_args()
+		dest_user = user.get_by_key(key)
+		if not dest_user:
+			return '', 404
+		user.update(dest_user['handle'], args['admin'])
+		changed_user = user.get_by_key(key)
+		socketio.emit('user_created', changed_user)
+		return '', 201
+api.add_resource(AdminUserResource, '/api/admin/user/<key>')
 
 @app.route('/', methods=[ 'GET' ])
 def push_index():

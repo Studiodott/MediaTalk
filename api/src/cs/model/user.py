@@ -114,3 +114,19 @@ def create(desired_key, admin=False):
 	})
 
 	return handle
+
+def update(handle, admin):
+
+	q = """
+		UPDATE
+			"user"
+		SET
+			"admin" = %(admin)s
+		WHERE
+			"handle" = %(handle)s;
+		"""
+
+	g.db_cur.execute(q, {
+		'handle' : handle,
+		'admin' : admin,
+	})
