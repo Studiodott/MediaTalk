@@ -51,7 +51,7 @@ from cs.background import tasks
 def setup_periodic_tasks(sender, **kwargs):
 
 	sender.add_periodic_task(
-		crontab(hour=0),
+		crontab(hour=0, minute=0),
 		tasks.sync_gdrive.s()
 	)
 
