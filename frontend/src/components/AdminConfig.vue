@@ -55,6 +55,7 @@
 
 <script>
 import { Store } from '@/store/store.js';
+import { useProgrammatic } from '@oruga-ui/oruga-next';
 
 export default {
   name : 'AdminConfig',
@@ -76,7 +77,11 @@ export default {
   ],
   setup : function() {
     const store = Store();
-    return { store };
+    const { oruga } = useProgrammatic();
+    return {
+      store,
+      oruga
+    };
   },
   mounted : function() {
     this.load();
@@ -87,9 +92,26 @@ export default {
     },
     save : function() {
       console.log("save");
-      Object.keys(this.config).forEach((k) => {
-        this.store.admin_config_set(k, this.config[k]);
-      });
+      let p = Object.keys(this.config).map((k) => this.store.admin_config_set(k, this.config[k]));
+      Promise.all(p)
+        .then(() =>
+          this.oruga.notification.open({
+            message : 'Configuration saved',
+            duration : 5000,
+            position : 'bottom-right',
+            variant : 'success',
+            closable : true
+          })
+        )
+        .catch(() =>
+          this.oruga.notification.open({
+            message : 'Error saving config!',
+            duration : 5000,
+            position : 'bottom-right',
+            variant : 'danger',
+            closable : true
+          })
+        );
     },
   },
   computed : {
