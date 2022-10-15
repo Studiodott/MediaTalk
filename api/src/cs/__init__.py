@@ -66,6 +66,8 @@ class LoginResource(Resource):
 	@marshal_with(login_fields)
 	def post(self):
 		args = login_parser.parse_args()
+		if not len(args['key']):
+			return '', 404
 		u = user.get_by_key(args['key'])
 		if not u:
 			handle = user.create(args['key'], admin=True if user.count() == 0 else False)

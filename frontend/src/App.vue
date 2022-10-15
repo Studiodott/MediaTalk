@@ -23,6 +23,7 @@
         </div>
         <o-button
           @click="try_auth"
+          :disabled="auth.email.length == 0"
           variant="primary">Let me in!</o-button>
       </div>
     </div>
