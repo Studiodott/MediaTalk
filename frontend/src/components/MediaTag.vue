@@ -17,7 +17,7 @@
         v-if="store.get_is_admin()">
 
         <o-button
-          @click="modal_admin_active = true">
+          @click="modal_open">
           <o-icon
             icon="pen">
           </o-icon>
@@ -43,7 +43,7 @@
                 horizontal
                 label="Description">
                 <o-input
-                  v-model="description"
+                  v-model="modal_description"
                   expanded>
                 </o-input>
               </o-field>
@@ -52,6 +52,7 @@
                 horizontal>
                 <o-button
                   @click="admin_save"
+                  :disabled="modal_description.length == 0"
                   variant="primary">
                   Save
                 </o-button>
@@ -178,6 +179,7 @@ export default {
   data : function() {
     return {
       modal_admin_active : false,
+      modal_description : undefined,
       selection_for_tagchooser : undefined,
       selection_for_media : undefined,
       highlights_for_media : undefined,
@@ -251,7 +253,7 @@ export default {
     // admin changed details about this media, this will trigger a websocket
     // message from server causing the store to refresh it
     admin_save : function() {
-      this.store.media_change(this.handle, this.description);
+      this.store.media_change(this.handle, this.modal_description);
     },
     // admin wants to remove this media, this'll trigger a websocket
     // message from server causing the store to remove it
@@ -259,6 +261,12 @@ export default {
       this.store.media_delete(this.handle);
       // close this "removed" media's modal
       this.modal_close();
+    },
+    // admin wants to see the modal with per-media options, copy some
+    // values to modal-specific places so edits don't touch the main scope
+    modal_open : function() {
+      this.modal_description = this.description;
+      this.modal_admin_active = true;
     },
     // close the modal
     modal_close : function() {
