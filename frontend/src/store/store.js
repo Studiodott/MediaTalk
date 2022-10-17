@@ -188,6 +188,26 @@ export const Store = defineStore('Store', {
 			});
 			this.live.media.splice(0, 0, media);
 		},
+		media_removed(handle) {
+			this.live.media = this.live.media.filter((e_media) => {
+				return handle != e_media.handle;
+			});
+
+			if (this.feature_removal_affects_search) {
+				this.search_results.media = this.search_results.media.filter((e_media) => {
+					return handle != e_media.handle;
+				});
+			}
+		},
+		media_changed(changed_media) {
+			this.live.media.forEach((m) => {
+				if (m.handle == changed_media.handle) {
+					Object.keys(m).forEach((key) => {
+						m[key] = changed_media[key];
+					});
+				}
+			});
+		},
 		user_added(user) {
 			this.live.users = this.live.users.filter((e_user) => {
 				return user.handle != e_user.handle;
@@ -373,6 +393,38 @@ export const Store = defineStore('Store', {
 					'Content-Type' : 'application/json',
 					'Authorization' : `Bearer ${localStorage.access_token}`,
 				},
+			}).catch((error) => {
+				console.log("error while tagi from metatag: " + error);
+				this.logout();
+			});
+			return t;
+		},
+
+		async media_change(media_handle, description) {
+			let u = `/api/media/${media_handle}`
+			let t = await window.fetch(api_target + u, {
+				method : 'PUT',
+				headers : {
+					'Content-Type' : 'application/json',
+					'Authorization' : `Bearer ${localStorage.access_token}`,
+				},
+				body : JSON.stringify({
+					'description' : description,
+				}),
+			}).catch((error) => {
+				console.log("error while tagi from metatag: " + error);
+				this.logout();
+			});
+			return t;
+		},
+		async media_delete(media_handle) {
+			let u = `/api/media/${media_handle}`
+			let t = await window.fetch(api_target + u, {
+				method : 'DELETE',
+				headers : {
+					'Content-Type' : 'application/json',
+					'Authorization' : `Bearer ${localStorage.access_token}`,
+				}
 			}).catch((error) => {
 				console.log("error while tagi from metatag: " + error);
 				this.logout();

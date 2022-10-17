@@ -16,7 +16,9 @@ def list():
 			""" + ', '.join([ f'm.{f} {f}' for f in F ]) + """
 		FROM
 			media m
-			INNER JOIN media_type mt ON m.media_type_id = mt.id;
+			INNER JOIN media_type mt ON m.media_type_id = mt.id
+		ORDER BY
+			created_at DESC;
 		"""
 	
 	g.db_cur.execute(q)
@@ -120,3 +122,26 @@ def create(args):
 	})
 
 	return handle
+
+def update(handle, description):
+
+	q = """
+		UPDATE "media" SET
+			"description"=%(description)s
+		WHERE
+			"handle"=%(handle)s;
+		"""
+
+	g.db_cur.execute(q, {
+		'handle' : handle,
+		'description' : description,
+	})
+
+def delete(handle):
+
+	q = """
+		DELETE FROM "media"
+		WHERE "handle"=%(handle)s;
+		"""
+
+	g.db_cur.execute(q, { 'handle' : handle })

@@ -10,8 +10,90 @@
       </o-icon>
       <h2
         class="subtitle">
-        {{ filename }}
+        {{ description }}
       </h2>
+
+      <div
+        v-if="store.get_is_admin()">
+
+        <o-button
+          @click="modal_admin_active = true">
+          <o-icon
+            icon="pen">
+          </o-icon>
+        </o-button>
+        <o-modal
+          v-model:active="modal_admin_active">
+          <div
+            class="modal-card">
+            <header
+              class="modal-card-head">
+              <p class="modal-card-title">Edit media</p>
+            </header>
+            <section
+              class="modal-card-body">
+              <o-field
+                horizontal
+                label="Filename">
+                <p>
+                  {{ filename }}
+                </p>
+              </o-field>
+              <o-field
+                horizontal
+                label="Description">
+                <o-input
+                  v-model="description"
+                  expanded>
+                </o-input>
+              </o-field>
+
+              <o-field
+                horizontal>
+                <o-button
+                  @click="admin_save"
+                  variant="primary">
+                  Save
+                </o-button>
+              </o-field>
+
+              <hr/>
+              <o-field
+                label="Remove media"
+                horizontal>
+                <o-button
+                  @click="admin_remove"
+                  variant="danger">
+                  Remove
+                </o-button>
+              </o-field>
+
+            </section>
+            <footer
+              class="modal-card-foot is-justify-content-end">
+              <o-button
+                @click="modal_close">
+                Close
+              </o-button>
+            </footer>
+          </div>
+        </o-modal>
+
+        <o-dropdown
+          aria-role="list">
+          <template
+            v-slot:trigger>
+            <o-icon
+              icon="caret-down"
+              size="small">
+            </o-icon>
+          </template>
+          <o-dropdown-item
+            aria-role="list-item">GOO
+          </o-dropdown-item>
+        </o-dropdown>
+      </div>
+
     </div>
     <div
       class="columns">
@@ -109,6 +191,7 @@ export default {
   name : 'MediaTag',
   data : function() {
     return {
+      modal_admin_active : false,
       selection_for_tagchooser : undefined,
       selection_for_media : undefined,
       highlights_for_media : undefined,
@@ -179,6 +262,22 @@ export default {
             break;
       }
     },
+    // admin changed details about this media, this will trigger a websocket
+    // message from server causing the store to refresh it
+    admin_save : function() {
+      this.store.media_change(this.handle, this.description);
+    },
+    // admin wants to remove this media, this'll trigger a websocket
+    // message from server causing the store to remove it
+    admin_remove : function() {
+      this.store.media_delete(this.handle);
+      // close this "removed" media's modal
+      this.modal_close();
+    },
+    // close the modal
+    modal_close : function() {
+      this.modal_admin_active = false;
+    }
   },
   computed : {
     getTagsForMedia() {

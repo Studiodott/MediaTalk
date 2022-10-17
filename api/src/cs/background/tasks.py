@@ -205,7 +205,7 @@ def sync_gdrive_real():
 			'media_desc' : None,
 			'status' : 'discovered',
 			'error' : None,
-			'description' : '',
+			'description' : f['name'],
 		}
 
 		temp_files = {}

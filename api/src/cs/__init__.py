@@ -124,10 +124,27 @@ class MediaManagerResource(Resource):
 		return { 'media' : l }, 200
 api.add_resource(MediaManagerResource, '/api/media')
 
+media_parser = reqparse.RequestParser()
+media_parser.add_argument('description', type=str, required=True)
 class MediaResource(Resource):
 	@marshal_with(media_fields)
 	def get(self, handle):
 		return media.get(handle), 200
+	def put(self, handle):
+		args = media_parser.parse_args()
+		media.update(handle, args['description'])
+		m = media.get(handle)
+		socketio.emit('media_changed', m)
+		g.db_commit = True
+		return '', 201
+	def delete(self, handle):
+		existing_taggings = tagging.list(media_handle=handle)
+		media.delete(handle)
+		for t in existing_taggings:
+			socketio.emit('tagging_removed', t['handle'])
+		socketio.emit('media_removed', handle)
+		g.db_commit = True
+		return '', 201
 api.add_resource(MediaResource, '/api/media/<handle>')
 
 metatag_fields = {

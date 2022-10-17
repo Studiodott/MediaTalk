@@ -6,7 +6,15 @@ from pprint import pprint as D
 from cs import app
 from cs.model.setup import key
 
-def list():
+def list(media_handle=None):
+
+	f = []
+	if media_handle:
+		f.append("m.handle=%(media_handle)s")
+	
+	if not len(f):
+		f.append("1=1")
+	
 	q = """
 		SELECT
 			ti.id as id,
@@ -22,10 +30,14 @@ def list():
 			tagging ti
 			INNER JOIN media m ON ti.media_id = m.id
 			INNER JOIN tag t ON ti.tag_id = t.id
-			INNER JOIN "user" u ON ti.user_id = u.id;
+			INNER JOIN "user" u ON ti.user_id = u.id
+		WHERE
+			""" + " AND ".join(f) + """
 		"""
 
-	g.db_cur.execute(q)
+	g.db_cur.execute(q, {
+		'media_handle' : media_handle,
+	})
 	return g.db_cur.fetchall()
 
 def get(handle):

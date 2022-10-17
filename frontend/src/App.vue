@@ -44,10 +44,21 @@
             <o-tab-item
               value="tagging"
               label="Tagging">
+              <div
+                class="box">
+                <ul>
+                  <li
+                    v-for="(media, media_index) in store.live.media">
+                    <a
+                      @click="scroll_to_media(media_index)">{{ media.description }}</a>
+                  </li>
+                </ul>
+              </div>
 
               <MediaTag
                 class="column is-full mb-6"
                 v-for="(media, media_index) in store.live.media"
+                ref="media"
                 :key="media_index"
                 v-bind="media"/>
 
@@ -152,6 +163,9 @@ export default {
     }
   },
   methods : {
+    scroll_to_media : function(i) {
+      this.$refs.media[i].$el.scrollIntoView({ behavior : 'smooth' });
+    },
     set_report_printable : function(p) {
       console.log(`printable was=${this.report_printable} is=${p}`);
       this.report_printable = p;
@@ -185,6 +199,12 @@ export default {
         });
         this.sockets.subscribe('media_created', (data) => {
           this.store.media_added(data);
+        });
+        this.sockets.subscribe('media_changed', (data) => {
+          this.store.media_changed(data);
+        });
+        this.sockets.subscribe('media_removed', (data) => {
+          this.store.media_removed(data);
         });
         this.sockets.subscribe('user_created', (data) => {
           this.store.user_added(data);
