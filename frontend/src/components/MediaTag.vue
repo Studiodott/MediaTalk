@@ -3,15 +3,15 @@
   <div
     class="box">
     <div
-      class="is-flex is-flex-direction-row is-align-items-center pb-4">
+      class="is-flex is-flex-direction-row is-justify-content-space-between is-align-items-center pb-4">
       <o-icon
         :icon="get_icon_for_type()"
         size="large">
       </o-icon>
-      <h2
-        class="subtitle">
+      <span
+        class="is-size-4">
         {{ description }}
-      </h2>
+      </span>
 
       <div
         v-if="store.get_is_admin()">
@@ -78,20 +78,6 @@
             </footer>
           </div>
         </o-modal>
-
-        <o-dropdown
-          aria-role="list">
-          <template
-            v-slot:trigger>
-            <o-icon
-              icon="caret-down"
-              size="small">
-            </o-icon>
-          </template>
-          <o-dropdown-item
-            aria-role="list-item">GOO
-          </o-dropdown-item>
-        </o-dropdown>
       </div>
 
     </div>

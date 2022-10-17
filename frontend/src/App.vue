@@ -50,6 +50,7 @@
                   <li
                     v-for="(media, media_index) in store.live.media">
                     <a
+                      class="is-size-7"
                       @click="scroll_to_media(media_index)">{{ media.description }}</a>
                   </li>
                 </ul>
