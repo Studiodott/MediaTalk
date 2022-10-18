@@ -165,7 +165,7 @@ export default {
   },
   methods : {
     scroll_to_media : function(i) {
-      this.$refs.media[i].$el.scrollIntoView({ behavior : 'smooth' });
+      this.$refs.media[i].$el.scrollIntoView({ behavior : 'smooth', block : 'center' });
     },
     set_report_printable : function(p) {
       console.log(`printable was=${this.report_printable} is=${p}`);
