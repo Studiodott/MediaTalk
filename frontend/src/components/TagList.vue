@@ -59,7 +59,7 @@
             </o-button>
           </o-field>
           <o-field
-            label="Remove all tag (and all taggings)"
+            label="Remove entire tag (and all taggings)"
             horizontal>
             <o-button
               @click="remove_tag(modal_ctx.tag_handle)"
