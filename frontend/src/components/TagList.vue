@@ -1,6 +1,81 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
   <section>
+
+    <!--
+      modal to show tagging details, shared over taggings (stuffed before opening)
+    -->
+    <o-modal
+      v-model:active="modal_is_open">
+
+      <div
+        class="modal-card">
+        <header
+          class="modal-card-head">
+          <p class="modal-card-title">Edit tagging</p>
+        </header>
+        <section
+          class="modal-card-body">
+          <o-field
+            horizontal
+            label="Created">
+            <p>
+              {{ get_time_ago(modal_ctx.created_at) }}
+            </p>
+          </o-field>
+          <o-field
+            horizontal
+            label="By">
+            <p>
+              {{ get_user_key(modal_ctx.user_handle) }}
+            </p>
+          </o-field>
+          <o-field
+            horizontal
+            label="Comment">
+            <p
+              v-if="modal_ctx.comment && modal_ctx.comment.length">
+              <b>{{ modal_ctx.comment }}</b>
+            </p>
+            <p
+              v-else>
+              <i>no comment entered</i>
+            </p>
+          </o-field>
+
+          <hr/>
+
+          <o-field
+            label="Remove this tagging"
+            horizontal>
+            <o-button
+              @click="remove_tagging(modal_ctx.handle)"
+              icon-left="trash-can"
+              variant="danger">
+              Remove this tagging
+            </o-button>
+          </o-field>
+          <o-field
+            label="Remove all tag (and all taggings)"
+            horizontal>
+            <o-button
+              @click="remove_tag(modal_ctx.tag_handle)"
+              icon-left="trash-can"
+              variant="danger">
+              Remove entire tag
+            </o-button>
+          </o-field>
+        </section>
+        <footer
+          class="modal-card-foot is-justify-content-end">
+          <o-button
+            @click="modal_close">
+            Close
+          </o-button>
+        </footer>
+      </div>
+    </o-modal>
+
     <o-collapse
       class="card"
       animation="slide"
@@ -60,54 +135,18 @@
               <!-- and a dropdown for options -->
               <div
                 class="tag">
-                <o-dropdown
-                  aria-role="list">
-                  <template
-                    v-slot:trigger>
-                    <o-icon
-                      icon="caret-down"
-                      size="small">
-                    </o-icon>
-                  </template>
-                  <o-dropdown-item
-                    aria-role="listitem">{{ get_time_ago(tagging.created_at) }} by {{ get_user_key(tagging.user_handle) }}</o-dropdown-item>
-                  <o-dropdown-item
-                    v-if="tagging.comment && tagging.comment.length"
-                    aria-role="listitem">comment <i>"{{ tagging.comment }}"</i></o-dropdown-item>
-                  <o-dropdown-item
-                    aria-role="listitem"></o-dropdown-item>
-                  <o-dropdown-item
-                    aria-role="listitem">
-                    <o-button
-                      size="small"
-                      class="is-fullwidth"
-                      icon-left="trash-can"
-                      variant="danger"
-                      @click="remove_tagging(tagging.handle)">
-                      remove tagging
-                    </o-button>
-                  </o-dropdown-item>
-                </o-dropdown>
+                <o-icon
+                  icon="pen"
+                  size="small"
+                  @click="modal_open(tagging)">
+                </o-icon>
+
               </div> <!-- class="tag" -->
 
             </div> <!-- individual tags, class="tags has-addons" -->
 
           </div> <!-- tagging list -->
         </div> <!-- tagging-box -->
-
-        <!-- general options for this tag -->
-        <div
-          class="content field is-flex is-flex-direction-row is-justify-content-flex-end p-2">
-          <o-button
-            size="small"
-            class="p-2"
-            :class="tag_removal_safety[tag_handle] == true ? 'is-light' : ''"
-            icon-left="trash-can"
-            variant="danger"
-            @click="remove_tag(tag_handle)">
-            remove entire tag
-          </o-button>
-        </div>
 
       </div> <!-- card content -->
     </o-collapse>
@@ -122,6 +161,8 @@ export default {
   name : 'TagList',
   data : function() {
     return {
+      modal_is_open : false,
+      modal_ctx : {},
       collapse_open_on : null,
       tag_removal_safety : {},
     };
@@ -143,6 +184,14 @@ export default {
     console.log(`taglist media_handle=${this.media_handle} collection=${this.collection}`);
   },
   methods : {
+    modal_open : function(tagging) {
+      this.modal_ctx = tagging;
+      this.modal_is_open = true;
+    },
+    modal_close : function() {
+      this.modal_is_open = false;
+      this.modal_ctx = {};
+    },
     select_taggings : function(taggings) {
       console.log(`selected ${taggings.length} taggings`);
       this.$emit('select', taggings); //.map(ti => ti.position));
@@ -172,13 +221,11 @@ export default {
     },
     remove_tagging : function(handle) {
       this.store.remove_tagging(handle);
+      this.modal_close();
     },
     remove_tag : function(handle) {
-      if (this.tag_removal_safety[handle] == true) {
-        this.tag_removal_safety[handle] = false;
-        return;
-      }
       this.store.remove_tag(handle);
+      this.modal_close();
     },
 
   },
