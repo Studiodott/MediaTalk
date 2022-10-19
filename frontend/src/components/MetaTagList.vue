@@ -16,7 +16,7 @@
         Existing metatags:
       </h2>
       <div
-        v-for="(mt, mt_index) in store.live.metatags"
+        v-for="(mt, mt_index) in all_metatags"
         :key="mt_index"
         :metatag="mt">
         <MetaTagEditor
@@ -52,6 +52,15 @@ export default {
   methods : {
   },
   computed : {
+    all_metatags() {
+      return this.store.live.metatags.slice().sort((l, r) => {
+        if (l.name == r.name)
+          return 0;
+        if (l.name < r.name)
+          return -1;
+        return 1;
+      });
+    },
   },
 };
 </script>

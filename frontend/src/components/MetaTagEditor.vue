@@ -80,6 +80,14 @@
 <script>
 import { Store } from '@/store/store.js';
 
+function cmp_strings(l, r) {
+  if (l == r)
+    return 0;
+  if (l < r)
+    return -1;
+  return 1;
+}
+
 export default {
   name : 'MetaTagEditor',
   data : function() {
@@ -102,10 +110,10 @@ export default {
   },
   computed: {
     get_tags_existing() {
-      return this.store.live.tags.filter((e_tag) => this.metatag.tag_handles.includes(e_tag.handle));
+      return this.store.live.tags.slice().sort((l, r) => { return cmp_strings(l.name, r.name); }).filter((e_tag) => this.metatag.tag_handles.includes(e_tag.handle));
     },
     get_tags_remaining() {
-      return this.store.live.tags.filter((e_tag) => !this.metatag.tag_handles.includes(e_tag.handle));
+      return this.store.live.tags.slice().sort((l, r) => { return cmp_strings(l.name, r.name); }).filter((e_tag) => !this.metatag.tag_handles.includes(e_tag.handle));
     },
   },
 };
