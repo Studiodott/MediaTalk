@@ -1,6 +1,6 @@
-# City Story
+# Media Talk
 
-A project by [Studio Dott](https://studiodott.be) which brings frictionless tagging of media fragments residing on a public Google Drive folder.
+A project by [Studio Dott](https://studiodott.be) which brings frictionless, multi-user, tagging of media fragments residing on a public Google Drive folder.
 
 It can easily be deployed to [Heroku](https://heroku.com) and stores its processed media files on any S3-compatible object store, such as [Wasabi](https://wasabi.com) or [Amazon](https://aws.amazon.com/s3/).
 
@@ -20,13 +20,13 @@ In this copied link is the identity of the folder we need. The link will have th
 
 #### API key
 
-When reading a Google Drive folder, City Story needs to tell Google under which person's name this transaction will happen. This is done by providing an API key.
+When reading a Google Drive folder, MediaTalk needs to tell Google under which person's name this transaction will happen. This is done by providing an API key.
 
 Please go to the [Google Cloud Console](https://console.cloud.google.com) and log in with your Google account, doing any needed setup work to get there. Then, in the menu, head over to "APIs & Services", and open "Credentials". At that page, press the "+ create credentials" button up top, and select "API key". A pop-up will tell you your API key, which will be a very random-looking bunch of characters, please note it down.
 
 ### S3
 
-S3 is a type of object storage (in which files can be stored and retrieved on "buckets" via HTTP). It was cooked up by Amazon but by now multiple vendors offer this using a uniform interface. City Story has been tested with both Amazon and Wasabi, but any S3-compatible vendor you prefer should fit right in there. As an example, we will be using Wasabi in this document.
+S3 is a type of object storage (in which files can be stored and retrieved on "buckets" via HTTP). It was cooked up by Amazon but by now multiple vendors offer this using a uniform interface. MediaTalk has been tested with both Amazon and Wasabi, but any S3-compatible vendor you prefer should fit right in there. As an example, we will be using Wasabi in this document.
 
 #### General setup
 
@@ -85,21 +85,21 @@ If all went well, we're armed with a few pieces of information:
 * the S3 access key ID,
 * the S3 secret access key.
 
-We can now install and configure City Story.
+We can now install and configure MediaTalk.
 
 ## Installation
 
 ### Deploying
 
-You can install City Story by pressing this button:
+You can install MediaTalk by pressing this button:
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Studiodott/citystory)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/Studiodott/MediaTalk)
 
 If you don't have an account with Heroku, you can create one during this process.
 
 ### Configuration
 
-During deployment, you specified the name for your instance of City Story, and it told you the link to access it (most likely in the form of `https://your-instance-name.herokuapp.com`). Head on over there.
+During deployment, you specified the name for your instance of MediaTalk, and it told you the link to access it (most likely in the form of `https://your-instance-name.herokuapp.com`). Head on over there.
 
 You will be asked to log in with an email address (the system will not send you emails). Remember which one you fill in! Because the first user which is created is also the administrator of this instance.
 
@@ -107,4 +107,4 @@ Head on over to the admin tab, to configure this instance. Fill in the values we
 
 ## License
 
-City Story is Open Source, under the [MIT](https://opensource.org/licenses/MIT) licence.
+MediaTalk is Open Source, under the [MIT](https://opensource.org/licenses/MIT) licence.
