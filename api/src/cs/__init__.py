@@ -226,6 +226,9 @@ class TagManagerResource(Resource):
 	@marshal_with(tag_fields)
 	def post(self):
 		args = tag_parser.parse_args()
+		if tag.find(args['name']):
+			# already exists
+			return '', 409
 		handle = tag.create(args['name'], args['description'])
 		t = tag.get(handle)
 		socketio.emit('tag_created', t)
@@ -239,10 +242,7 @@ class TagResource(Resource):
 	def get(self, handle):
 		return tag.get(handle), 200
 	def delete(self, handle):
-		print(f'TAGREMOVE {handle}')
-		print(f'TAGREMOVE {handle}')
-		print(f'TAGREMOVE {handle}')
-		print(f'TAGREMOVE {handle}')
+		print(f"delete(handle={handle}")
 		tag.remove(handle)
 		socketio.emit('tag_removed', handle)
 		g.db_commit = True

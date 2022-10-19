@@ -41,6 +41,9 @@ def list(metatag_handle=None):
 	return g.db_cur.fetchall()
 
 def find(name):
+
+	name = name.lower()
+
 	q = """
 		SELECT
 			id,
@@ -89,6 +92,8 @@ def remove(handle):
 
 def create(name, description):
 	handle = key()
+
+	name = name.lower()
 
 	q = """
 		INSERT INTO "tag" (
