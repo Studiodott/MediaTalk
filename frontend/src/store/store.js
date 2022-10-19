@@ -227,6 +227,15 @@ export const Store = defineStore('Store', {
 			});
 			this.live.taggings.splice(0, 0, tagging);
 		},
+		tagging_changed(changed_tagging) {
+			this.live.taggings.forEach((ti) => {
+				if (ti.handle == changed_tagging.handle) {
+					Object.keys(ti).forEach((key) => {
+						ti[key] = changed_tagging[key];
+					});
+				}
+			});
+		},
 		metatag_added(metatag) {
 			this.live.metatags = this.live.metatags.filter((e_metatag) => {
 				return metatag.handle != e_metatag.handle;
@@ -262,6 +271,7 @@ export const Store = defineStore('Store', {
 				});
 			}
 		},
+
 		metatag_removed(handle) {
 			this.live.metatags = this.live.metatags.filter((e_metatag) => {
 				return handle != e_metatag.handle;
@@ -417,6 +427,24 @@ export const Store = defineStore('Store', {
 			});
 			return t;
 		},
+		async tagging_change(tagging_handle, comment) {
+			let u = `/api/tagging/${tagging_handle}`
+			let t = await window.fetch(api_target + u, {
+				method : 'PUT',
+				headers : {
+					'Content-Type' : 'application/json',
+					'Authorization' : `Bearer ${localStorage.access_token}`,
+				},
+				body : JSON.stringify({
+					'comment' : comment,
+				}),
+			}).catch((error) => {
+				console.log("error while tagi from metatag: " + error);
+				this.logout();
+			});
+			return t;
+		},
+
 		async media_delete(media_handle) {
 			let u = `/api/media/${media_handle}`
 			let t = await window.fetch(api_target + u, {

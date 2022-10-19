@@ -108,3 +108,18 @@ def create(media_handle, tag_handle, user_handle, position, comment=''):
 	g.db_cur.execute(q, a)
 
 	return handle
+
+def update(handle, comment=''):
+
+	q = """
+		UPDATE "tagging"
+		SET
+			"comment"=%(comment)s
+		WHERE
+			"handle"=%(handle)s;
+		"""
+
+	g.db_cur.execute(q, {
+		'handle' : handle,
+		'comment' : comment,
+	})

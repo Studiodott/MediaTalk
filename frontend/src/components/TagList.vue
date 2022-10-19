@@ -33,14 +33,17 @@
           <o-field
             horizontal
             label="Comment">
-            <p
-              v-if="modal_ctx.comment && modal_ctx.comment.length">
-              <b>{{ modal_ctx.comment }}</b>
-            </p>
-            <p
-              v-else>
-              <i>no comment entered</i>
-            </p>
+            <o-input
+              v-model="modal_ctx.comment">
+            </o-input>
+          </o-field>
+          <o-field
+            horizontal>
+            <o-button
+              @click="modal_save"
+              variant="primary">
+              Save
+            </o-button>
           </o-field>
 
           <hr/>
@@ -185,12 +188,19 @@ export default {
   },
   methods : {
     modal_open : function(tagging) {
-      this.modal_ctx = tagging;
+      let keys = [ 'comment', 'created_at', 'user_handle', 'handle' ];
+      this.modal_ctx = {};
+      keys.forEach((k) => {
+        this.modal_ctx[k] = tagging[k];
+      });
       this.modal_is_open = true;
     },
     modal_close : function() {
       this.modal_is_open = false;
       this.modal_ctx = {};
+    },
+    modal_save : function() {
+      this.store.tagging_change(this.modal_ctx.handle, this.modal_ctx.comment);
     },
     select_taggings : function(taggings) {
       console.log(`selected ${taggings.length} taggings`);

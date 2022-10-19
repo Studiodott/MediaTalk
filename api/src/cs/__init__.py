@@ -295,10 +295,21 @@ class TaggingManagerResource(Resource):
 
 api.add_resource(TaggingManagerResource, '/api/tagging')
 
+tagging_update_parser = reqparse.RequestParser()
+tagging_update_parser.add_argument('comment', type=str, required=True)
 class TaggingResource(Resource):
 	@marshal_with(tagging_fields)
 	def get(self, handle):
 		return tagging.get(handle), 200
+
+	def put(self,handle):
+		args = tagging_update_parser.parse_args()
+		tagging.update(handle, args['comment'])
+		ti = tagging.get(handle)
+		socketio.emit('tagging_changed', ti)
+		g.db_commit = True
+		return '', 201
+
 	def delete(self, handle):
 		print(f'TAGGING REMOVE {handle}')
 		print(f'TAGGING REMOVE {handle}')

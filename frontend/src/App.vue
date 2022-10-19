@@ -216,6 +216,9 @@ export default {
         this.sockets.subscribe('tagging_removed', (data) => {
           this.store.tagging_removed(data);
         });
+        this.sockets.subscribe('tagging_changed', (data) => {
+          this.store.tagging_changed(data);
+        });
         this.sockets.subscribe('tag_removed', (data) => {
           this.store.tag_removed(data);
         });
