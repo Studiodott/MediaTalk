@@ -1,5 +1,5 @@
 {
-  "name": "City Story",
+  "name": "MediaTalk",
   "description": "Studio Dott's multimedia tagging tool",
   "scripts": {
     "postdeploy": "db/create.sh"
