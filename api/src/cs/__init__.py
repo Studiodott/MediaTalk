@@ -435,7 +435,7 @@ class IntegrationMediaUploadTestResource(Resource):
 		tag_list = list(filter(lambda t: len(t) > 0, args['tag']))
 
 		D(args)
-		handle = args['handle'] if ('handle' in args and len(args['handle'])) else str(ULID())
+		handle = args['handle'] if ('handle' in args and args['handle'] and len(args['handle'])) else str(ULID())
 		assert args['media_type'] in [ 'TEXT', 'IMAGE', 'AUDIO', 'VIDEO' ]
 		dest = os.path.join(app.config['UPLOAD_DIR'], args['media'].filename)
 		args['media'].save(dest)
