@@ -224,8 +224,13 @@ export default {
       for (let i = 0; i < this.chosenTags.length; i++) {
         let chosen_tag = this.chosenTags[i];
         if (typeof chosen_tag === 'string') {
-          let new_tag = await this.store.create_tag(chosen_tag, '');
-          tag_handles.push(new_tag.handle);
+          let tag = this.store.live.tags.find((t) => t.name.toLowerCase() == chosen_tag.toLowerCase());
+          if (!tag) {
+            // actually a real tag
+            console.log(`creating new tag for ${chosen_tag}`);
+            tag = await this.store.create_tag(chosen_tag, '');
+          }
+          tag_handles.push(tag.handle);
         } else {
           tag_handles.push(chosen_tag.handle);
         }
