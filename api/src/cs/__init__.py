@@ -415,7 +415,7 @@ class IntegrationMediaUploadResource(Resource):
 	def post(self):
 		args = integration_media_upload_parser.parse_args()
 		handle = args['handle'] if ('handle' in args and args['handle'] and len(args['handle'])) else str(ULID())
-		tag_list = list(filter(lambda t: len(t) > 0, args['tag']))
+		tag_list = list(filter(lambda t: len(t) > 0, args['tag'])) if args['tag'] else []
 		dest = os.path.join(app.config['UPLOAD_DIR'], args['media'].filename)
 		assert args['media_type'] in [ 'TEXT', 'IMAGE', 'AUDIO', 'VIDEO' ]
 		args['media'].save(dest)
@@ -432,9 +432,7 @@ class IntegrationMediaUploadTestResource(Resource):
 
 	def post(self):
 		args = integration_media_upload_parser.parse_args()
-		tag_list = list(filter(lambda t: len(t) > 0, args['tag']))
-
-		D(args)
+		tag_list = list(filter(lambda t: len(t) > 0, args['tag'])) if args['tag'] else []
 		handle = args['handle'] if ('handle' in args and args['handle'] and len(args['handle'])) else str(ULID())
 		assert args['media_type'] in [ 'TEXT', 'IMAGE', 'AUDIO', 'VIDEO' ]
 		dest = os.path.join(app.config['UPLOAD_DIR'], args['media'].filename)
