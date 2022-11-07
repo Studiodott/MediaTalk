@@ -109,6 +109,8 @@ def media_add_tags(media_handle, tags):
 @celery_app.task
 def media_add_tags_real(media_handle, tags):
 
+	print(f"media_add_tags_real(media_handle={media_handle}, tags={tags})")
+
 	api_user_key = 'added_by_API'
 	tagging_range = json.dumps({ 'what' : 'all' })
 
@@ -126,6 +128,7 @@ def media_add_tags_real(media_handle, tags):
 			socketio.emit('tag_created', tag.get(tag_handle), broadcast=True)
 		else:
 			tag_handle = existing_tag['handle']
+		print(f"  media_handle={media_handle} tag_handle={tag_handle} user_handle={user_handle} tagging_range={tagging_range}")
 		tagging_handle = tagging.create(media_handle, tag_handle, user_handle, tagging_range)
 		socketio.emit('tagging_created', tagging.get(tagging_handle))
 
@@ -346,6 +349,7 @@ def sync_local_file_real(_path, name, _type, upstream_handle, description):
 		for k in [ 'S3_URL', 'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY', 'DRIVE_API_KEY', 'DRIVE_FOLDER_ID' ]:
 			assert c[k] and len(c[k]) > 0
 	except Exception as e:
+		print(f"error talking to S3: {e}")
 		socketio.emit('sync_status', { 'error' : True, 'message' : 'configuration not complete' }, broadcast=True)
 		return False
 
@@ -367,7 +371,7 @@ def sync_local_file_real(_path, name, _type, upstream_handle, description):
 
 	fdesc = {
 		'filename' : name,
-		'hande' : None,
+		'handle' : None,
 		'path' : _path,
 		'media_type' : _type,
 		'upstream_handle' : upstream_handle,
@@ -435,6 +439,7 @@ def sync_local_file_real(_path, name, _type, upstream_handle, description):
 		socketio.emit('sync_status', { 'error' : True, 'message' : str(e) }, broadcast=True)
 		fdesc['error'] = f"while {fdesc['status']}: {e}"
 		fdesc['status'] = 'failed'
+		print(f"error! fdesc={fdesc}")
 		raise e
 	else:
 		fdesc['handle'] = media.create(fdesc)

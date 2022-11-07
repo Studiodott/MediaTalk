@@ -418,11 +418,9 @@ class IntegrationMediaUploadResource(Resource):
 		tag_list = list(filter(lambda t: len(t) > 0, args['tag']))
 		dest = os.path.join(app.config['UPLOAD_DIR'], args['media'].filename)
 		assert args['media_type'] in [ 'TEXT', 'IMAGE', 'AUDIO', 'VIDEO' ]
-		D("saving to {}".format(dest))
 		args['media'].save(dest)
-		task_sync = tasks.sync_local_file.s(dest, args['media'].filename, args['media_type'], handle, args['description'])
-		task_add_tags = tasks.media_add_tags.s(tag_list)
-		chain(task_sync, task_add_tags)()
+		handle = tasks.sync_local_file_real(dest, args['media'].filename, args['media_type'], handle, args['description'])
+		task_add_tags = tasks.media_add_tags_real(handle, tag_list)
 
 		return '', 201
 api.add_resource(IntegrationMediaUploadResource, '/api/integration/media/upload')
