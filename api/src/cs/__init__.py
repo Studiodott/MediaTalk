@@ -421,6 +421,7 @@ class IntegrationMediaUploadResource(Resource):
 		args['media'].save(dest)
 		handle = tasks.sync_local_file_real(dest, args['media'].filename, args['media_type'], handle, args['description'])
 		task_add_tags = tasks.media_add_tags_real(handle, tag_list)
+		g.db_commit = True
 
 		return '', 201
 api.add_resource(IntegrationMediaUploadResource, '/api/integration/media/upload')
@@ -493,6 +494,7 @@ class AdminUserResource(Resource):
 		user.update(dest_user['handle'], args['admin'])
 		changed_user = user.get_by_key(key)
 		socketio.emit('user_created', changed_user)
+		g.db_commit = True
 		return '', 201
 api.add_resource(AdminUserResource, '/api/admin/user/<key>')
 
