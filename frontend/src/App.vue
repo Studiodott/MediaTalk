@@ -60,7 +60,7 @@
                 class="column is-full mb-6"
                 v-for="(media, media_index) in store.live.media"
                 ref="media"
-                :key="media_index"
+                :key="media.handle"
                 v-bind="media"/>
 
             </o-tab-item>
@@ -79,13 +79,13 @@
                 v-if="report_printable"
                 class="column is-full mb-6"
                 v-for="(media, media_index) in store.search_results.media"
-                :key="media_index"
+                :key="media.handle"
                 v-bind="media"/>
               <MediaDisplay
                 v-if="!report_printable"
                 class="column is-full mb-6"
                 v-for="(media, media_index) in store.search_results.media"
-                :key="media_index"
+                :key="media.handle"
                 v-bind="media"/>
             </o-tab-item>
 
