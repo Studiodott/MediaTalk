@@ -44,6 +44,7 @@
                 label="Description">
                 <o-input
                   v-model="modal_description"
+                  @input="modal_is_changed = true"
                   expanded>
                 </o-input>
               </o-field>
@@ -52,7 +53,8 @@
                 horizontal>
                 <o-button
                   @click="admin_save"
-                  :disabled="modal_description.length == 0"
+                  :disabled="!modal_is_changed"
+                  :class="(modal_is_saving == true) ? 'is-loading' : ''"
                   variant="primary">
                   Save
                 </o-button>
@@ -179,6 +181,8 @@ export default {
   data : function() {
     return {
       modal_admin_active : false,
+      modal_is_saving : false,
+      modal_is_changed : false,
       modal_description : undefined,
       selection_for_tagchooser : undefined,
       selection_for_media : undefined,
@@ -253,7 +257,10 @@ export default {
     // admin changed details about this media, this will trigger a websocket
     // message from server causing the store to refresh it
     admin_save : function() {
-      this.store.media_change(this.handle, this.modal_description);
+      this.modal_is_saving = true;
+      this.store.media_change(this.handle, this.modal_description)
+        .then(() => { this.modal_is_saving = false; this.modal_is_changed = false; })
+        .catch(() => { this.modal_is_saving = false; });
     },
     // admin wants to remove this media, this'll trigger a websocket
     // message from server causing the store to remove it

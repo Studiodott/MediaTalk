@@ -34,12 +34,15 @@
             horizontal
             label="Comment">
             <o-input
+              @input="modal_is_changed = true"
               v-model="modal_ctx.comment">
             </o-input>
           </o-field>
           <o-field
             horizontal>
             <o-button
+              :class="(modal_is_saving == true) ? 'is-loading' : ''"
+              :disabled="!modal_is_changed"
               @click="modal_save"
               variant="primary">
               Save
@@ -165,6 +168,8 @@ export default {
   data : function() {
     return {
       modal_is_open : false,
+      modal_is_changed : false,
+      modal_is_saving : false,
       modal_ctx : {},
       collapse_open_on : null,
       tag_removal_safety : {},
@@ -200,7 +205,10 @@ export default {
       this.modal_ctx = {};
     },
     modal_save : function() {
-      this.store.tagging_change(this.modal_ctx.handle, this.modal_ctx.comment);
+      this.modal_is_saving = true;
+      this.store.tagging_change(this.modal_ctx.handle, this.modal_ctx.comment)
+        .then(() => { this.modal_is_saving = false; this.modal_is_changed = false; })
+        .catch(() => { this.modal_is_saving = false; });
     },
     select_taggings : function(taggings) {
       console.log(`selected ${taggings.length} taggings`);
