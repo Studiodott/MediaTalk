@@ -46,14 +46,34 @@
               label="Tagging">
               <div
                 class="box">
-                <ul>
-                  <li
+                <div
+                  class="is-flex is-flex-direction-row is-align-items-center is-justify-content-center pb-4">
+                  <span
+                    class="is-size-4">
+                    Media collection
+                  </span>
+                </div>
+                <div
+                  class="field is-grouped is-grouped-multiline">
+                  <div
+                    class="control"
                     v-for="(media, media_index) in store.live.media">
-                    <a
-                      class="is-size-7"
-                      @click="scroll_to_media(media_index)">{{ media.description }}</a>
-                  </li>
-                </ul>
+                    <div
+                      @click="scroll_to_media(media_index)"
+                      class="tags has-addons are-medium">
+                      <span
+                        class="tag">
+                        <o-icon
+                          :icon="get_icon_for_type(media.media_type)">
+                        </o-icon>
+                      </span>
+                      <span
+                        class="tag">
+                        {{ media.description }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <MediaTag
@@ -165,7 +185,28 @@ export default {
   },
   methods : {
     scroll_to_media : function(i) {
-      this.$refs.media[i].$el.scrollIntoView({ behavior : 'smooth', block : 'center' });
+      this.$refs.media[i].$el.scrollIntoView({ behavior : 'smooth', block : 'end' });
+    },
+    // a nice icon for this media type
+    get_icon_for_type : function(media_type) {
+      console.log(`media_type=${media_type}`);
+      switch (media_type) {
+        case 'VIDEO':
+            return 'video';
+            break;
+        case 'AUDIO':
+            return 'microphone';
+            break;
+        case 'TEXT':
+            return 'file-lines';
+            break;
+        case 'IMAGE':
+            return 'camera';
+            break;
+        default:
+            return 'question';
+            break;
+      }
     },
     set_report_printable : function(p) {
       console.log(`printable was=${this.report_printable} is=${p}`);
