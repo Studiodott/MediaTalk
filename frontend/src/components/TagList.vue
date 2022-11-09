@@ -134,9 +134,15 @@
                   icon="comment"
                   size="small">
                 </o-icon>
-                <span>
+                <span
+                  v-if="show_comments && tagging.comment">
+                  {{ get_tag_name(tag_handle) }} <i>("{{ tagging.comment }}")</i>
+                </span>
+                <span
+                  v-else>
                   {{ get_tag_name(tag_handle) }}
                 </span>
+
               </span>
               <!-- and a dropdown for options -->
               <div
@@ -184,6 +190,7 @@ export default {
   props : [
     'media_handle',
     'collection',
+    'show_comments',
   ],
   emits : [
     'select',

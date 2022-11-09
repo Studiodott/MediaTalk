@@ -156,6 +156,7 @@
       <div
         class="column">
         <TagList
+          :show_comments="false"
           :media_handle="handle"
           @select="highlight_taggings"
           collection="live"/>

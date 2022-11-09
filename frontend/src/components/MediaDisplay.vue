@@ -64,6 +64,7 @@
       <div
         class="column">
         <TagList
+          :show_comments="true"
           :media_handle="handle"
           @select="highlight_taggings"
           collection="search"/>
