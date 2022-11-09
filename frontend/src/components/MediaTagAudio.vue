@@ -56,8 +56,7 @@
 <script>
 import { nextTick, watch } from 'vue';
 import { Store } from '@/store/store.js';
-
-const FPS = 25;
+import { tagging_fps, tagging_primary_colour } from '@/config.js';
 
 export default {
   name : 'MediaTagAudio',
@@ -280,14 +279,14 @@ export default {
       this.redraw();
     },
     // when we start playing, we start an interval timer to update the
-    // position at FPS
+    // position at tagging_fps
     started_playing : function() {
       // clear any running context
       if (this.playing_ctx)
         clearInterval(this.playing_ctx);
       this.playing_ctx = setInterval(() => {
         this.update_position();
-      }, 1000 / FPS);
+      }, 1000 / tagging_fps);
     },
     // and when we stop playing, we stop the interval timer
     stopped_playing : function() {
@@ -387,7 +386,7 @@ export default {
 
       draw({
         what : 'point',
-        colour : this.selection_colour,
+        colour : tagging_primary_colour,
         at : pos,
       });
     },
