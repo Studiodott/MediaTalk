@@ -143,12 +143,24 @@
           </div>
         </div>
         <div
-          v-if="media_type == 'TEXT' || media_type == 'IMAGE'">
+          v-if="media_type == 'IMAGE'">
           <TagChooserStatic
             :selection="selection_for_tagchooser"
             @cleared="cleared_by_tagchooser"
             :media_handle="handle"/>
         </div>
+        <div
+          v-if="media_type == 'TEXT'">
+          <!--
+            on text, selecting a point makes no sense
+          -->
+          <TagChooserStatic
+            :allowed_selections="['ALL','RANGE']"
+            :selection="selection_for_tagchooser"
+            @cleared="cleared_by_tagchooser"
+            :media_handle="handle"/>
+        </div>
+
       </div>
     </div>
     <div

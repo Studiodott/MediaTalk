@@ -2,6 +2,7 @@
 <template>
   <section>
     <div
+      v-if="allowed_selections.includes('ALL')"
       class="field">
       <o-radio
         v-model="selected"
@@ -10,6 +11,7 @@
       </o-radio>
     </div>
     <div
+      v-if="allowed_selections.includes('POINT')"
       class="field">
       <o-radio
         :disabled="!(selected_at)"
@@ -26,6 +28,7 @@
       </o-radio>
     </div>
     <div
+      v-if="allowed_selections.includes('RANGE')"
       class="field">
       <o-radio
         :disabled="!(selected_from && selected_to)"
@@ -107,7 +110,15 @@ export default {
       type : Object,
       default() {
         return undefined;
-      }
+      },
+    },
+    // only allow the user to make these types of selections
+    allowed_selections : {
+      type : Array,
+      required : false,
+      default() {
+        return [ 'ALL', 'POINT', 'RANGE' ];
+      },
     },
     media_handle : {
       type : String,
