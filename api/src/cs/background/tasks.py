@@ -175,12 +175,31 @@ def sync_gdrive_real():
 		# set up the sync
 		drive_service = discovery.build('drive', 'v3', developerKey=c['DRIVE_API_KEY'])
 
-		# get a remote file list, skipping folders
+		# collection of all pages
+		all_drive_files = []
+
+		# general query options, all non-directory files parented by _FOLDER_ID
 		param = {
 			'q' : f"'{c['DRIVE_FOLDER_ID']}' in parents and mimeType != 'application/vnd.google-apps.folder'",
+			'fields' : f"nextPageToken, files(id, name, mimeType)",
+			'pageSize' : 100,
 		}
-		drive_result = drive_service.files().list(**param).execute()
-		drive_files = drive_result.get('files')
+
+		pageToken = None
+
+		while True:
+
+			param['pageToken'] = pageToken
+
+			drive_result = drive_service.files().list(**param).execute()
+			drive_files = drive_result.get('files')
+
+			all_drive_files.extend(drive_files)
+
+			pageToken = drive_result.get('nextPageToken', None)
+			if not pageToken:
+				# no more results, done here
+				break
 	except Exception as e:
 		socketio.emit('sync_status', { 'error' : True, 'message' : 'could not connect to Drive' }, broadcast=True)
 		return False
@@ -188,8 +207,7 @@ def sync_gdrive_real():
 	"""
 	loop over the found files, checking if we know them already, processing if not
 	"""
-	print(f"found {len(drive_files)} on this drive")
-	for f in drive_files:
+	for f in all_drive_files:
 		print(f"inspecting {f['name']}")
 
 		# do we have this file already?
@@ -216,6 +234,10 @@ def sync_gdrive_real():
 		# try to download the file from Drive, process if (if needed),
 		# and push it to S3
 		try:
+
+			# not a fan of this, but we must appease the Google, lest we
+			# get ratelimited
+			time.sleep(1)
 
 			# figure out its type, trust upstream on this
 			fdesc['media_type'] = f['mimeType'].split('/')[0].upper()
@@ -323,7 +345,7 @@ def sync_gdrive_real():
 				print(f"removing temp_file {where.name} for {what}")
 				os.remove(where.name)
 
-	socketio.emit('sync_status', { 'error' : False, 'message' : f"synced {len(drive_files)} files" }, broadcast=True)
+	socketio.emit('sync_status', { 'error' : False, 'message' : f"synced {len(all_drive_files)} files" }, broadcast=True)
 
 	return True
 
