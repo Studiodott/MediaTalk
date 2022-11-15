@@ -40,14 +40,23 @@ def process_audio(in_file_name, out_file):
 	except:
 		P = 640
 
-	# get ffmpeg to decode the audio (part) of the file to PCM
-	out, _ = (ffmpeg
-		.input(in_file_name)
-		.output('-', format='s8', acodec='pcm_s8', ac=1, ar='8k')
-		.overwrite_output()
-		.run(capture_stdout=True)
-	)
-	n_bytes = len(out)
+	print("a")
+	try:
+		# get ffmpeg to decode the audio (part) of the file to PCM
+		out, _ = (ffmpeg
+			.input(in_file_name)
+			.output('-', format='s8', acodec='pcm_s8', ac=1, ar='8k')
+			.overwrite_output()
+			.run(capture_stdout=True)
+		)
+		n_bytes = len(out)
+	except Exception as e:
+		# this is not an error per se, some videos have no audio track
+		print(f"could not dump audio: {e}")
+
+		# stub zeroes so we generate an empty waveform
+		n_bytes = P*2
+		out = b'\00' * n_bytes
 
 	# a stride is the number of PCM samples we summarize into one
 	# value, to get one pixel in our output waveform
@@ -63,6 +72,8 @@ def process_audio(in_file_name, out_file):
 
 	# we'll take the largest stdev as 100% pixel height
 	stats_largest = max(stats)
+	# we support the case of all-zeroes
+	stats_largest = 1 if stats_largest == 0 else stats_largest
 
 	w = P
 	h = P//8
