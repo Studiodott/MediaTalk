@@ -83,6 +83,10 @@
         </o-modal>
       </div>
 
+      <div
+        v-else>
+      </div>
+
     </div>
     <div
       class="columns">
