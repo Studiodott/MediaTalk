@@ -1,6 +1,7 @@
 <!-- vim: set ts=2 sw=2 expandtab : -->
 <template>
   <NavBar
+    @show="show"
     v-if="store.logged_in"/>
   <section
     class="login-screen section"
@@ -33,100 +34,108 @@
     class="section"
     v-if="store.logged_in">
     <div
-      v-if="store.logged_in"
       class="container">
-      <div class="columns">
-        <div
-          class="column is-three-quarters is-flex is-flex-direction-column is-align-items-stretch">
-          <o-tabs
-            position="centered"
-            v-model="active_tab">
-            <o-tab-item
-              value="tagging"
-              label="Tagging">
+
+      <div
+        class="columns is-multiline">
+
+        <o-collapse
+          v-if="active_pane == 'tagging'"
+          class="card column is-full mt-6 fake-columns"
+          animation="slide"
+          :open="media_collection_open"
+          @open="media_collection_open = true"
+          @close="media_collection_open = false">
+          <template #trigger="props">
+            <div
+              class="card-header"
+              role="button">
+              <a
+                class="card-header-icon">
+                <o-icon
+                  :icon="media_collection_open ? 'caret-up' : 'caret-down'">
+                </o-icon>
+              </a>
+              <p
+                class="card-header-title">
+                Media collection
+              </p>
+            </div>
+          </template>
+          <div
+            class="card-content">
+            <div
+              class="content">
               <div
-                class="box">
+                class="field is-grouped is-grouped-multiline">
                 <div
-                  class="is-flex is-flex-direction-row is-align-items-center is-justify-content-center pb-4">
-                  <span
-                    class="is-size-4">
-                    Media collection
-                  </span>
-                </div>
-                <div
-                  class="field is-grouped is-grouped-multiline">
+                  class="control"
+                  v-for="(media, media_index) in store.live.media">
                   <div
-                    class="control"
-                    v-for="(media, media_index) in store.live.media">
-                    <div
-                      @click="scroll_to_media(media_index)"
-                      class="tags has-addons are-medium">
-                      <span
-                        class="tag">
-                        <o-icon
-                          :icon="get_icon_for_type(media.media_type)">
-                        </o-icon>
-                      </span>
-                      <span
-                        class="tag">
-                        {{ media.description }}
-                      </span>
-                    </div>
+                    @click="scroll_to_media(media_index)"
+                    class="tags has-addons are-medium">
+                    <span
+                      class="tag">
+                      <o-icon
+                        :icon="get_icon_for_type(media.media_type)">
+                      </o-icon>
+                    </span>
+                    <span
+                      class="tag">
+                      {{ media.description }}
+                    </span>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </o-collapse>
 
-              <MediaTag
-                class="column is-full mb-6"
-                v-for="(media, media_index) in store.live.media"
-                ref="media"
-                :key="media.handle"
-                v-bind="media"/>
+        <MediaTag
+          v-if="active_pane == 'tagging'"
+          class="column is-full mt-6 fake-columns"
+          v-for="(media, media_index) in store.live.media"
+          ref="media"
+          :key="media.handle"
+          v-bind="media"/>
 
-            </o-tab-item>
+        <FilterChooser
+          v-if="active_pane == 'reporting'"
+          :filter_string="filter_string"
+          @set_printable="set_report_printable"
+          class="column is-full mt-6"
+          />
+        <UserList
+          class="column is-full mt-6"
+          v-if="active_pane == 'reporting'"
+          :users="store.search_results.users"/>
+        <MediaPrint
+          v-if="active_pane == 'reporting' && report_printable"
+          class="column is-full mt-6 fake-columns"
+          v-for="(media, media_index) in store.search_results.media"
+          :key="media.handle"
+          v-bind="media"/>
+        <MediaDisplay
+          v-if="active_pane == 'reporting' && !report_printable"
+          class="column is-full mt-6 fake-columns"
+          v-for="(media, media_index) in store.search_results.media"
+          :key="media.handle"
+          v-bind="media"/>
 
-            <o-tab-item
-              value="reporting"
-              label="Reporting">
-              <FilterChooser
-                :filter_string="filter_string"
-                @set_printable="set_report_printable"
-                class="column is-full mb-6"
-                />
-              <UserList
-                :users="store.search_results.users"/>
-              <MediaPrint
-                v-if="report_printable"
-                class="column is-full mb-6"
-                v-for="(media, media_index) in store.search_results.media"
-                :key="media.handle"
-                v-bind="media"/>
-              <MediaDisplay
-                v-if="!report_printable"
-                class="column is-full mb-6"
-                v-for="(media, media_index) in store.search_results.media"
-                :key="media.handle"
-                v-bind="media"/>
-            </o-tab-item>
+        <MetaTagList
+          v-if="active_pane == 'metatags'"
+          value="metatags"
+          class="column is-full mt-6"
+          label="Metatags">
+        </MetaTagList>
 
-            <o-tab-item
-              value="metatags"
-              label="Metatags">
-              <MetaTagList/>
-            </o-tab-item>
+        <Admin
+          v-if="active_pane == 'admin' && store.get_is_admin()"
+          value="admin"
+          class="column is-full mt-6"
+          label="Admin">
+        </Admin>
 
-            <o-tab-item
-              v-if="store.get_is_admin()"
-              value="admin"
-              label="Admin">
-              <Admin/>
-            </o-tab-item>
-
-          </o-tabs>
-        </div>
-        <div
-          class="column is-one-quarter">
-        </div>
       </div>
     </div>
   </section>
@@ -163,7 +172,8 @@ export default {
   },
   data : function() {
     return {
-      active_tab : "tagging",
+      active_pane : "tagging",
+      media_collection_open : false,
       report_printable : false,
       filter_string : '',
       boon : this.store.boon,
@@ -285,6 +295,10 @@ export default {
         // TODO show, allow retry
       });
     },
+    show : function(what) {
+      console.log("want me to show "+what);
+      this.active_pane = what;
+    },
   },
 };
 </script>
@@ -292,5 +306,10 @@ export default {
 <style scoped>
 .login-screen {
   height: 100%;
+}
+.fake-columns {
+  margin-left: -0.75rem;
+  margin-right: -0.75rem;
+  margin-top: -0.75rem;
 }
 </style>

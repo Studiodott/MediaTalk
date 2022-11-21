@@ -31,6 +31,29 @@
       class="navbar-menu">
       <div
         class="navbar-start">
+        <div
+          class="navbar-item">
+          <o-button
+            @click="show('tagging')">
+            Tagging
+          </o-button>
+          <o-button
+            @click="show('reporting')"
+            class="ml-4">
+            Reporting
+          </o-button>
+          <o-button
+            @click="show('metatags')"
+            class="ml-4">
+            Metatags
+          </o-button>
+          <o-button
+            class="ml-4"
+            @click="show('admin')"
+            v-if="store.get_is_admin()">
+            Admin
+          </o-button>
+        </div>
       </div>
       <div
         class="navbar-end is-flex is-flex is-align-items-center">
@@ -92,11 +115,18 @@ export default {
       store,
     };
   },
+  emits : [
+    'show',
+  ],
   methods : {
     log_out : function() {
       console.log('logging out');
       this.store.log_out();
       location.reload();
+    },
+    show : function(what) {
+      console.log(what);
+      this.$emit('show', what);
     },
   },
   mounted : function() {
