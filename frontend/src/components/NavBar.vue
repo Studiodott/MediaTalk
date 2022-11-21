@@ -19,7 +19,8 @@
         class="navbar-burger"
         aria-label="menu"
         aria-expanded="false"
-        data-target="mainNavBar">
+        ref="burger_icon"
+        @click="show_burger_menu()">
         <span aria-hidden="true"></span>
         <span aria-hidden="true"></span>
         <span aria-hidden="true"></span>
@@ -27,7 +28,7 @@
     </div>
 
     <div
-      id="mainNavBar"
+      ref="burger_menu"
       class="navbar-menu">
       <div
         class="navbar-start">
@@ -125,6 +126,10 @@ export default {
     show : function(what) {
       console.log(what);
       this.$emit('show', what);
+    },
+    show_burger_menu : function() {
+      this.$refs.burger_icon.classList.toggle('is-active');
+      this.$refs.burger_menu.classList.toggle('is-active');
     },
   },
   mounted : function() {
