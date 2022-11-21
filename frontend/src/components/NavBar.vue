@@ -31,29 +31,27 @@
       class="navbar-menu">
       <div
         class="navbar-start">
-        <div
+        <a
+          @click="show('tagging')"
           class="navbar-item">
-          <o-button
-            @click="show('tagging')">
-            Tagging
-          </o-button>
-          <o-button
-            @click="show('reporting')"
-            class="ml-4">
-            Reporting
-          </o-button>
-          <o-button
-            @click="show('metatags')"
-            class="ml-4">
-            Metatags
-          </o-button>
-          <o-button
-            class="ml-4"
-            @click="show('admin')"
-            v-if="store.get_is_admin()">
-            Admin
-          </o-button>
-        </div>
+          Tagging
+        </a>
+        <a
+          @click="show('reporting')"
+          class="navbar-item">
+          Reporting
+        </a>
+        <a
+          @click="show('metatags')"
+          class="navbar-item">
+          Metatags
+        </a>
+        <a
+          @click="show('admin')"
+          class="navbar-item"
+          v-if="store.get_is_admin()">
+          Admin
+        </a>
       </div>
       <div
         class="navbar-end is-flex is-flex is-align-items-center">
