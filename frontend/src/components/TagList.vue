@@ -200,7 +200,7 @@ export default {
   },
   methods : {
     modal_open : function(tagging) {
-      let keys = [ 'comment', 'created_at', 'user_handle', 'handle' ];
+      let keys = [ 'comment', 'created_at', 'user_handle', 'handle', 'tag_handle' ];
       this.modal_ctx = {};
       keys.forEach((k) => {
         this.modal_ctx[k] = tagging[k];
@@ -251,8 +251,8 @@ export default {
     remove_tag : function(handle) {
       this.store.remove_tag(handle);
       this.modal_close();
+      this.highlight([], []);
     },
-
   },
   computed : {
     getTaggingsForMedia() {
